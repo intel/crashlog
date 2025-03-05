@@ -32,7 +32,7 @@ pub struct CrashLog {
 }
 
 impl CrashLog {
-    fn from_regions(regions: Vec<Region>) -> CrashLog {
+    fn from_regions(regions: Vec<Region>) -> Result<Self, Error> {
         let mut queue = VecDeque::from(regions);
         let mut regions = Vec::new();
 
@@ -56,10 +56,14 @@ impl CrashLog {
             regions.push(region)
         }
 
-        CrashLog {
+        if regions.is_empty() {
+            return Err(Error::InvalidCrashLog);
+        }
+
+        Ok(CrashLog {
             regions,
             ..CrashLog::default()
-        }
+        })
     }
 
     /// Extracts the Crash Log records from [Berr].
@@ -69,7 +73,7 @@ impl CrashLog {
             .iter()
             .filter_map(|entry| Region::from_cper_section(&entry.cper_section))
             .collect();
-        Ok(CrashLog::from_regions(regions))
+        CrashLog::from_regions(regions)
     }
 
     #[cfg(all(target_os = "uefi", feature = "extraction"))]
@@ -105,7 +109,7 @@ impl CrashLog {
             return Err(Error::NoCrashLogFound);
         }
 
-        Ok(CrashLog::from_regions(regions))
+        CrashLog::from_regions(regions)
     }
 
     /// Decodes a raw Crash Log binary.
@@ -116,7 +120,7 @@ impl CrashLog {
             CrashLog::from_cper(cper)
         } else {
             // Input file is a single Crash Log region
-            Ok(CrashLog::from_regions(vec![Region::from_slice(s)?]))
+            CrashLog::from_regions(vec![Region::from_slice(s)?])
         }
     }
 
