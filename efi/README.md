@@ -33,7 +33,7 @@ extracted records and display the crash data on the UEFI console.
    ```
 
 4. **Explore EFI Extraction Options:**
-  
+
    Learn about the different options available for EFI extraction:
 
    ```
@@ -42,7 +42,7 @@ extracted records and display the crash data on the UEFI console.
 
 5. **Extract the Crash Log:**
 
-  Extract the Crash Log from the ACPI BERT and save it to the partition:
+   Extract the Crash Log from the ACPI BERT and save it to the partition:
 
    ```
        FS1:\> iclg.efi extract sample.crashlog
