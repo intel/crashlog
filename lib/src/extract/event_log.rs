@@ -194,7 +194,7 @@ fn query_crashlogs(path: PCWSTR, query: PCWSTR, query_flags: u32) -> Result<Vec<
                 slice::from_raw_parts::<u8>(values[0].Anonymous.BinaryVal, values[0].Count as usize)
             };
 
-            match CrashLog::from_slice(&binary) {
+            match CrashLog::from_slice(binary) {
                 Ok(mut crashlog) => {
                     crashlog.metadata = metadata_from_evt_values(values[1], values[2])?;
                     crashlogs.push(crashlog)
@@ -210,7 +210,7 @@ fn query_crashlogs(path: PCWSTR, query: PCWSTR, query_flags: u32) -> Result<Vec<
 }
 
 pub(crate) fn get_crashlogs_from_event_logs(path: Option<&Path>) -> Result<Vec<CrashLog>> {
-    let evtx_path_hstring = path.map(|path| HSTRING::from(path));
+    let evtx_path_hstring = path.map(HSTRING::from);
     let evtx_path = evtx_path_hstring
         .as_ref()
         .map(|hstring| PCWSTR(hstring.as_ptr()));
