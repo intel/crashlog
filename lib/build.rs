@@ -65,7 +65,11 @@ fn embed_collateral_tree() {
                     .join(&security)
                     .join("crashlog"),
             )
-            .unwrap();
+            .unwrap()
+            .iter()
+            .filter_map(|component| component.to_str())
+            .collect::<Vec<&str>>()
+            .join("/");
 
         file.write_all(
             format!(
