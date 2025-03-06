@@ -14,7 +14,7 @@ fn write_file(path: &Path, slice: &[u8]) -> Result<(), Error> {
 
 #[cfg(target_os = "windows")]
 fn unpack_evtx(evtx: &Path) -> Result<(), Error> {
-    let crashlogs = CrashLog::from_windows_event_logs(Some(&evtx))
+    let crashlogs = CrashLog::from_windows_event_logs(Some(evtx))
         .inspect_err(|err| log::error!("Failed to unpack EVTX file: {err}"))?;
     let mut path = PathBuf::from(evtx);
     for (i, crashlog) in crashlogs.iter().enumerate() {
