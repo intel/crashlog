@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: MIT
 
 use super::Record;
+use crate::Error;
 #[cfg(feature = "collateral_manager")]
 use crate::collateral::{CollateralManager, CollateralTree};
 use crate::node::{Node, NodeType};
-use crate::Error;
 #[cfg(not(feature = "std"))]
 use alloc::format;
 

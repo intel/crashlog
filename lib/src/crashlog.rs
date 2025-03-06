@@ -1,6 +1,7 @@
 // Copyright (C) 2025 Intel Corporation
 // SPDX-License-Identifier: MIT
 
+use crate::Error;
 use crate::bert::{Berr, Bert};
 #[cfg(feature = "collateral_manager")]
 use crate::collateral::{CollateralManager, CollateralTree};
@@ -10,7 +11,6 @@ use crate::extract;
 use crate::metadata::Metadata;
 use crate::node::Node;
 use crate::region::Region;
-use crate::Error;
 #[cfg(not(feature = "std"))]
 use alloc::{collections::VecDeque, vec, vec::Vec};
 #[cfg(target_os = "uefi")]

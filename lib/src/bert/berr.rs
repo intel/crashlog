@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: MIT
 
 use super::Bert;
+use crate::CrashLog;
 use crate::cper::fer::{FirmwareErrorRecord, FirmwareErrorRecordHeader, RECORD_ID_CRASHLOG};
 use crate::cper::{CperSection, FW_ERROR_RECORD_GUID};
-use crate::CrashLog;
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 #[cfg(not(feature = "std"))]

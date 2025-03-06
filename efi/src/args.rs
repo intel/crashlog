@@ -4,11 +4,11 @@
 use alloc::fmt;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
+use uefi::CString16;
 use uefi::fs::PathBuf;
 use uefi::prelude::*;
 use uefi::println;
 use uefi::proto::shell_params::ShellParameters;
-use uefi::CString16;
 
 pub enum ArgsError {
     InvalidArgument(String),

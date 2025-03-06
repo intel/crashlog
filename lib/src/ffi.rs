@@ -21,13 +21,13 @@ use core::slice;
 use core::{ffi::c_void, ptr::NonNull};
 #[cfg(not(feature = "std"))]
 use core::{
-    ffi::{c_char, c_uchar, CStr},
+    ffi::{CStr, c_char, c_uchar},
     ptr,
 };
 #[cfg(feature = "std")]
 use std::{
     collections::VecDeque,
-    ffi::{c_char, c_uchar, CStr, CString},
+    ffi::{CStr, CString, c_char, c_uchar},
     ptr,
 };
 #[cfg(all(target_os = "uefi", feature = "extraction"))]
@@ -85,7 +85,7 @@ pub struct CrashLogNodeChildren<'a> {
 /// # Errors
 ///
 /// Returns a NULL pointer if the context cannot be initialized.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn crashlog_init() -> *mut CrashLogContext {
     #[cfg(not(feature = "embedded_collateral_tree"))]
     {
@@ -120,7 +120,7 @@ pub extern "C" fn crashlog_init() -> *mut CrashLogContext {
 /// # Errors
 ///
 /// Returns a `NULL` pointer if the binary blob does not encode any valid Crash Log records.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn crashlog_read_from_buffer(
     context: *mut CrashLogContext,
     data: *const u8,
@@ -137,7 +137,7 @@ pub unsafe extern "C" fn crashlog_read_from_buffer(
 ///
 /// Returns a `NULL` pointer if the Crash Log records cannot be found.
 #[cfg(all(target_os = "uefi", feature = "extraction"))]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn crashlog_read_from_system_table(
     context: *mut CrashLogContext,
     system_table: *mut c_void,
@@ -153,7 +153,7 @@ pub extern "C" fn crashlog_read_from_system_table(
 ///
 /// Returns a `NULL` pointer if the Crash Log records cannot be found.
 #[cfg(any(all(target_os = "windows", feature = "extraction"), doc))]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn crashlog_read_from_windows_event_logs(
     context: *mut CrashLogContext,
 ) -> *mut CrashLogs {
@@ -172,7 +172,7 @@ pub extern "C" fn crashlog_read_from_windows_event_logs(
 ///
 /// Returns a `NULL` pointer if the Crash Log records cannot be found.
 #[cfg(any(all(target_os = "linux", feature = "extraction"), doc))]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn crashlog_read_from_linux_sysfs(context: *mut CrashLogContext) -> *mut CrashLog {
     CrashLog::from_linux_sysfs()
         .map(alloc)
@@ -196,7 +196,7 @@ pub extern "C" fn crashlog_read_from_linux_sysfs(context: *mut CrashLogContext) 
 ///
 /// Returns a `NULL` pointer if one of the arguments is `NULL` or if no more Crash Logs is
 /// available in the iterator.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn crashlog_next(
     context: *mut CrashLogContext,
     crashlogs: *mut CrashLogs,
@@ -232,7 +232,7 @@ pub unsafe extern "C" fn crashlog_next(
 /// # Errors
 ///
 /// Returns a `NULL` pointer if one of the arguments is `NULL`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn crashlog_decode(
     context: *mut CrashLogContext,
     crashlog: *const CrashLog,
@@ -265,7 +265,7 @@ pub unsafe extern "C" fn crashlog_decode(
 ///
 /// The `crashlog` pointer must be valid and obtained using one of the `crashlog_read_*()`
 /// functions.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn crashlog_export_to_binary(
     context: *mut CrashLogContext,
     crashlog: *const CrashLog,
@@ -296,7 +296,7 @@ pub unsafe extern "C" fn crashlog_export_to_binary(
 ///
 /// Returns a `NULL` pointer if one of the arguments is `NULL` or if an error happens during the
 /// generation of the JSON.
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[cfg(feature = "serialize")]
 pub unsafe extern "C" fn crashlog_export_to_json(
     context: *mut CrashLogContext,
@@ -336,7 +336,7 @@ pub unsafe extern "C" fn crashlog_export_to_json(
 ///
 /// The `buffer` pointer must point to a valid writable memory region of `buffer_size` bytes.
 /// The data written to this buffer is not nul-terminated.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn crashlog_read_export(
     context: *mut CrashLogContext,
     export: *mut CrashLogExport,
@@ -379,7 +379,7 @@ pub unsafe extern "C" fn crashlog_read_export(
 /// [`crashlog_get_next_node_child`], or the [`crashlog_get_node_by_path`] functions.
 ///
 /// The `buffer` pointer must point to a writable memory region of `buffer_size` bytes.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn crashlog_get_node_name(
     context: *mut CrashLogContext,
     node: *const Node,
@@ -419,7 +419,7 @@ pub unsafe extern "C" fn crashlog_get_node_name(
 /// [`crashlog_get_next_node_child`], or the [`crashlog_get_node_by_path`] functions.
 ///
 /// The `value` pointer must point to a writable memory region of 8 bytes.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn crashlog_get_node_value(
     context: *mut CrashLogContext,
     node: *const Node,
@@ -455,7 +455,7 @@ pub unsafe extern "C" fn crashlog_get_node_value(
 /// # Errors
 ///
 /// Returns a `NULL` pointer if one of the arguments is `NULL`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn crashlog_get_node_children<'a>(
     context: *mut CrashLogContext,
     node: *const Node,
@@ -488,7 +488,7 @@ pub unsafe extern "C" fn crashlog_get_node_children<'a>(
 ///
 /// Returns a `NULL` pointer if one of the arguments is `NULL` or if no more node is available in
 /// the iterator.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn crashlog_get_next_node_child(
     context: *mut CrashLogContext,
     children: *mut CrashLogNodeChildren,
@@ -522,7 +522,7 @@ pub unsafe extern "C" fn crashlog_get_next_node_child(
 /// # Errors
 ///
 /// Returns a `NULL` pointer if one of the arguments is `NULL` or if the node does not exist.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn crashlog_get_node_by_path(
     context: *mut CrashLogContext,
     node: *const Node,
@@ -554,7 +554,7 @@ fn free<T>(ptr: *mut T) {
 }
 
 /// Releases the memory allocated for the Crash Log.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn crashlog_release(crashlog: *mut CrashLog) {
     free(crashlog)
 }
@@ -562,19 +562,19 @@ pub extern "C" fn crashlog_release(crashlog: *mut CrashLog) {
 /// Releases the memory allocated for the Crash Log register tree.
 ///
 /// The root node of the tree is expected to be passed to this function.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn crashlog_release_nodes(node: *mut Node) {
     free(node)
 }
 
 /// Releases the memory allocated for the Crash Log export.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn crashlog_release_export(node: *mut CrashLogExport) {
     free(node)
 }
 
 /// Releases the memory allocated for the Crash Log global context.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn crashlog_deinit(ctx: *mut CrashLogContext) {
     free(ctx)
 }

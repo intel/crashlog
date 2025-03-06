@@ -18,13 +18,15 @@ impl AcpiHandler for IdentityMapped {
         physical_address: usize,
         size: usize,
     ) -> PhysicalMapping<Self, T> {
-        PhysicalMapping::new(
-            physical_address,
-            NonNull::new(physical_address as *mut _).unwrap(),
-            size,
-            size,
-            Self,
-        )
+        unsafe {
+            PhysicalMapping::new(
+                physical_address,
+                NonNull::new(physical_address as *mut _).unwrap(),
+                size,
+                size,
+                Self,
+            )
+        }
     }
 
     fn unmap_physical_region<T>(_region: &PhysicalMapping<Self, T>) {}
