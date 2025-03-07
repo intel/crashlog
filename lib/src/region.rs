@@ -62,7 +62,10 @@ impl Region {
             log::debug!("Record size: 0x{record_size:04x}");
 
             if record_size == 0 {
-                log::warn!("Record has an empty size");
+                log::warn!(
+                    "{} record has an empty size. Skipping.",
+                    header.record_type().unwrap_or("UNKNOWN")
+                );
                 break;
             }
 
