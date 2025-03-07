@@ -1,5 +1,7 @@
 # Lightweight Crash Log Framework
 
+[![CI](https://github.com/intel/crashlog/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/intel/crashlog/actions/workflows/ci.yml)
+
 The Lightweight Crash Log Framework is a reference implementation designed for
 decoding and extracting data using Intel® Crash Log Technology. It can function
 as a standalone application or be integrated into other applications.
