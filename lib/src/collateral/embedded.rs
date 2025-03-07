@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 use super::{CollateralManager, CollateralTree, ItemPath, PVSS};
-use crate::utils::Map;
 use crate::Error;
+use crate::utils::Map;
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 

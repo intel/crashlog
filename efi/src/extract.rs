@@ -4,9 +4,9 @@
 use alloc::format;
 use intel_crashlog::CrashLog;
 use log::{error, warn};
+use uefi::CString16;
 use uefi::fs::{FileSystem, Path, PathBuf};
 use uefi::prelude::*;
-use uefi::CString16;
 
 fn generate_filename(crashlog: &CrashLog) -> Result<PathBuf, uefi::Error> {
     CString16::try_from(format!("{}.crashlog", crashlog.metadata).as_str())

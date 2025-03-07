@@ -17,9 +17,9 @@ mod path;
 mod pvss;
 mod target_info;
 
+use crate::Error;
 use crate::header::Header;
 use crate::utils::Map;
-use crate::Error;
 #[cfg(not(feature = "std"))]
 use alloc::{string::ToString, vec::Vec};
 

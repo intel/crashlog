@@ -3,7 +3,7 @@
 
 //! Provides access to the records stored in a Crash Log region.
 
-use crate::cper::{fer, CperSection};
+use crate::cper::{CperSection, fer};
 use crate::error::Error;
 use crate::header::Header;
 use crate::record::Record;
@@ -22,7 +22,7 @@ pub struct Region {
 impl Region {
     pub(crate) fn from_cper_section(section: &CperSection) -> Option<Self> {
         match section {
-            CperSection::FirmwareErrorRecord(ref fer) => {
+            CperSection::FirmwareErrorRecord(fer) => {
                 let guid = fer.header.guid;
                 if guid == fer::RECORD_ID_CRASHLOG {
                     Region::from_slice(&fer.payload).ok()

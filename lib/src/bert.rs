@@ -6,8 +6,8 @@ pub mod berr;
 mod tests;
 
 use acpi::{
-    sdt::{SdtHeader, Signature},
     AcpiTable,
+    sdt::{SdtHeader, Signature},
 };
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
@@ -66,7 +66,7 @@ impl Bert {
     /// If the [Berr] is not valid, None is returned.
     #[cfg(all(target_os = "uefi", feature = "extraction"))]
     pub unsafe fn berr_from_phys_mem(&self) -> Option<Berr> {
-        Berr::from_slice(self.raw_berr_from_phys_mem())
+        Berr::from_slice(unsafe { self.raw_berr_from_phys_mem() })
     }
 
     pub(super) fn to_bytes(&self) -> Vec<u8> {

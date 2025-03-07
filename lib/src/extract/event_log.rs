@@ -1,18 +1,18 @@
 // Copyright (C) 2025 Intel Corporation
 // SPDX-License-Identifier: MIT
 
-use crate::metadata;
 use crate::CrashLog;
-use std::alloc::{alloc, dealloc, Layout};
+use crate::metadata;
+use std::alloc::{Layout, alloc, dealloc};
 use std::ffi::c_void;
 use std::ops::{Deref, Drop};
 use std::path::Path;
 use std::slice;
-use windows::core::*;
 use windows::Win32::Foundation::*;
 use windows::Win32::System::EventLog::EVT_VARIANT;
 use windows::Win32::System::EventLog::*;
 use windows::Win32::System::Time::FileTimeToSystemTime;
+use windows::core::*;
 
 pub struct EvtHandle(EVT_HANDLE);
 

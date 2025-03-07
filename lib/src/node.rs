@@ -4,11 +4,11 @@
 //! A tree-like data structure containing the decoded Crash Log registers.
 
 #[cfg(feature = "std")]
-use std::collections::{btree_map, BTreeMap};
+use std::collections::{BTreeMap, btree_map};
 
 #[cfg(not(feature = "std"))]
 use alloc::{
-    collections::{btree_map, BTreeMap},
+    collections::{BTreeMap, btree_map},
     format,
     string::String,
 };

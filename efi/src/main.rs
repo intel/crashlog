@@ -27,8 +27,8 @@ fn run_command(args: &Args) -> Result<(), uefi::Error> {
 
     if let Some(ref command) = args.command {
         match command {
-            Command::Extract { ref output_path } => extract::extract(output_path.as_deref()),
-            Command::Info { ref input_paths } => {
+            Command::Extract { output_path } => extract::extract(output_path.as_deref()),
+            Command::Info { input_paths } => {
                 for input_path in input_paths {
                     if let Err(err) = decode::info(input_path) {
                         println!("Cannot decode sample: {err}");
@@ -36,7 +36,7 @@ fn run_command(args: &Args) -> Result<(), uefi::Error> {
                 }
                 Ok(())
             }
-            Command::Decode { ref input_path } => decode::decode(input_path),
+            Command::Decode { input_path } => decode::decode(input_path),
         }
     } else {
         args.show_help();

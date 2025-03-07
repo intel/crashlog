@@ -52,7 +52,8 @@ fn out_of_tree() {
         ..PVSS::default()
     };
 
-    assert!(cm
-        .get_item_with_pvss(pvss, "../../../../../../README.md")
-        .is_err());
+    assert!(
+        cm.get_item_with_pvss(pvss, "../../../../../../README.md")
+            .is_err()
+    );
 }

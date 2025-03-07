@@ -1,8 +1,8 @@
 // Copyright (C) 2025 Intel Corporation
 // SPDX-License-Identifier: MIT
 
-use super::input::Command;
 use super::Pager;
+use super::input::Command;
 
 impl Pager {
     fn search(&mut self, indexes: impl IntoIterator<Item = usize>) {
