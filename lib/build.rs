@@ -1,13 +1,19 @@
 // Copyright (C) 2025 Intel Corporation
 // SPDX-License-Identifier: MIT
 
+#[cfg(feature = "ffi")]
 extern crate cbindgen;
 
 use std::env;
-use std::fs::File;
-use std::io::Write;
-use std::path::{Path, PathBuf};
 
+#[cfg(feature = "embedded_collateral_tree")]
+use std::{
+    fs::File,
+    io::Write,
+    path::{Path, PathBuf},
+};
+
+#[cfg(feature = "ffi")]
 fn generate_headers() {
     let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
     println!("cargo:rerun-if-changed=src/ffi.rs");
@@ -43,6 +49,7 @@ fn generate_headers() {
     }
 }
 
+#[cfg(feature = "embedded_collateral_tree")]
 fn embed_collateral_tree() {
     let collateral_tree =
         env::var("CRASHLOG_COLLATERAL_TREE").unwrap_or_else(|_| "collateral".to_string());
@@ -89,6 +96,7 @@ fn embed_collateral_tree() {
     file.write_all("}\n".as_ref()).unwrap();
 }
 
+#[cfg(feature = "embedded_collateral_tree")]
 fn visit_collateral_tree(root: &Path) -> Vec<(String, String, String, String, PathBuf)> {
     let mut items = Vec::new();
 
@@ -120,6 +128,7 @@ fn visit_collateral_tree(root: &Path) -> Vec<(String, String, String, String, Pa
     items
 }
 
+#[cfg(feature = "embedded_collateral_tree")]
 fn visit_dirs(path: &Path) -> Vec<PathBuf> {
     let mut paths = vec![];
 
@@ -138,6 +147,9 @@ fn visit_dirs(path: &Path) -> Vec<PathBuf> {
 }
 
 fn main() {
+    #[cfg(feature = "ffi")]
     generate_headers();
+
+    #[cfg(feature = "embedded_collateral_tree")]
     embed_collateral_tree();
 }

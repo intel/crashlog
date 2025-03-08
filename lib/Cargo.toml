@@ -11,7 +11,6 @@ crate-type = ["cdylib", "rlib"]
 default = [
     "extraction",
     "embedded_collateral_tree",
-    "ffi",
     "fs_collateral_tree",
     "serialize",
     "std"
@@ -33,7 +32,8 @@ fs_collateral_tree = [
     "std"
 ]
 ffi = [
-    "embedded_collateral_tree"
+    "embedded_collateral_tree",
+    "dep:cbindgen"
 ]
 serialize = [
     "dep:serde",
@@ -44,7 +44,6 @@ std = [
 ]
 
 [build-dependencies]
-cbindgen = "0.27"
 cargo-emit = "0.2"
 
 [dependencies]
@@ -85,4 +84,8 @@ optional = true
 
 [target.'cfg(target_os = "uefi")'.dependencies.uefi-raw]
 version = "0.9"
+optional = true
+
+[build-dependencies.cbindgen]
+version = "0.27"
 optional = true

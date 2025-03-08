@@ -1,8 +1,7 @@
 // Copyright (C) 2025 Intel Corporation
 // SPDX-License-Identifier: MIT
 
-use intel_crashlog::ffi::*;
-use intel_crashlog::prelude::*;
+use crate::ffi::*;
 use std::ffi::CStr;
 
 #[test]
