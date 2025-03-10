@@ -5,6 +5,9 @@
 
 #![allow(unused_variables)]
 
+#[cfg(test)]
+mod tests;
+
 #[cfg(feature = "embedded_collateral_tree")]
 use crate::collateral::{CollateralManager, EmbeddedTree};
 use crate::crashlog::CrashLog;

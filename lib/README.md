@@ -38,13 +38,13 @@
 1. Build the library using the following command:
 
   ```
-  $ cargo build --release
+  $ cargo build --release --features ffi
   ```
 
 2. If needed, specify the features needed in the library:
 
   ```
-  $ cargo build --release --no-default-features --features serialize,std
+  $ cargo build --release --no-default-features --features ffi,serialize,std
   ```
 
 3. The header files are generated under the `target/include` directory:
@@ -163,7 +163,7 @@ run the following commands:
 1. Ensure all unit tests pass:
 
   ```
-  $ cargo test
+  $ cargo test --all-features
   ```
 
 2. Verify the application builds on both Windows and Linux:
