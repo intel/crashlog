@@ -89,11 +89,13 @@ fn merge() {
 #[test]
 fn merge_record() {
     let mut root0 = Node::root();
-    root0.create_record_hierarchy("foo.bar.reg0");
+    root0.add(Node::record("foo"));
+    root0.create_hierarchy("foo.bar.reg0");
     root0.create_hierarchy("some.bar.reg1");
 
     let mut root1 = Node::root();
-    root1.create_record_hierarchy("foo.bar.reg1");
+    root1.add(Node::record("foo"));
+    root1.create_hierarchy("foo.bar.reg1");
 
     root0.merge(root1);
 

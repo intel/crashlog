@@ -9,7 +9,7 @@ use crate::header::record_types;
 use crate::node::Node;
 use crate::node::NodeType;
 #[cfg(not(feature = "std"))]
-use alloc::{str, string::String, vec::Vec};
+use alloc::{borrow::ToOwned, str, string::String, vec::Vec};
 use log::debug;
 #[cfg(feature = "std")]
 use std::str;
@@ -60,6 +60,7 @@ impl Record {
 
         let csv = str::from_utf8(layout)?;
         let mut columns = Vec::new();
+        let mut current_path = Vec::new();
 
         for (i, line) in csv.lines().enumerate() {
             if i == 0 {
@@ -85,7 +86,32 @@ impl Record {
             if entry.name.is_empty() {
                 continue;
             }
-            let node = record_root.create_record_hierarchy(&entry.name);
+
+            let mut segments = entry.name.split(".");
+            let Some(top) = segments.next() else {
+                continue;
+            };
+
+            if !top.is_empty() {
+                // Absolute path
+                current_path.clear();
+                current_path.push(top.to_owned());
+
+                if record_root.get(top).is_none() {
+                    // Top-level is assumed to be the record name
+                    record_root.add(Node::record(top));
+                }
+            }
+
+            for segment in segments {
+                if segment.is_empty() {
+                    let _ = current_path.pop();
+                } else {
+                    current_path.push(segment.to_owned());
+                }
+            }
+
+            let node = record_root.create_hierarchy_from_iter(&current_path);
             node.description = entry.description;
             if let Some(value) = self.read_field(offset * 8 + entry.offset, entry.size) {
                 node.kind = NodeType::Field { value }

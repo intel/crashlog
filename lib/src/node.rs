@@ -206,8 +206,17 @@ impl Node {
     }
 
     pub fn create_hierarchy(&mut self, path: &str) -> &mut Node {
+        self.create_hierarchy_from_iter(path.split("."))
+    }
+
+    pub(crate) fn create_hierarchy_from_iter<S, I>(&mut self, path: I) -> &mut Node
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
         let mut ptr = self;
-        for name in path.split('.') {
+        for name in path {
+            let name = name.as_ref();
             if ptr.get(name).is_none() {
                 ptr.add(Node::section(name));
             }
@@ -216,19 +225,6 @@ impl Node {
                 .expect("Node should be present in the hierarchy")
         }
         ptr
-    }
-
-    pub fn create_record_hierarchy(&mut self, path: &str) -> &mut Node {
-        match path.split_once(".") {
-            Some((record, hierarchy)) => {
-                if self.get(record).is_none() {
-                    self.add(Node::record(record));
-                }
-                let record_node = self.get_mut(record).expect("Record node should be present");
-                record_node.create_hierarchy(hierarchy)
-            }
-            None => self.create_hierarchy(path),
-        }
     }
 
     /// Returns an iterator over the node's children. The children nodes are sorted alphabetically.
