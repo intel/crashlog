@@ -50,6 +50,35 @@ impl Record {
         Some(value)
     }
 
+    /// Decodes a section of the [Record] located at the given `offset` into a [Node] tree using an
+    /// arbitrary decode definition (`layout`).
+    ///
+    /// The decode definition must be CSV-encoded, use semi-colons as delimiters, and
+    /// contain the following columns:
+    /// - `name`:
+    ///   Dot-separated path to the field in the decode output (example: `aaa.bbb.ccc`).
+    ///   The path can be relative to the previous entry (example: `..bar.baz`).
+    /// - `offset`: offset of the field in the record in bits.
+    /// - `size`: size of the field in bits.
+    /// - `description`: description of the field.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intel_crashlog::prelude::*;
+    ///
+    /// let record = Record {
+    ///     header: Header::default(),
+    ///     data: vec![0x42],
+    /// };
+    ///
+    /// let csv = "name;offset;size;description;bitfield
+    /// foo.bar;0;8;;0";
+    ///
+    /// let root = record.decode_with_csv(csv.as_bytes(), 0).unwrap();
+    /// let field = root.get_by_path("foo.bar").unwrap();
+    /// assert_eq!(field.kind, NodeType::Field { value: 0x42 });
+    /// ```
     pub fn decode_with_csv(&self, layout: &[u8], offset: usize) -> Result<Node, Error> {
         let mut root = Node::root();
         let record_root = if let Some(custom_root) = self.header.get_root_path() {
@@ -120,6 +149,7 @@ impl Record {
         Ok(root)
     }
 
+    /// Decodes the [Record] header into a [Node] tree.
     pub fn basic_decode(&self) -> Node {
         let mut record = Node::record(self.header.record_type().unwrap_or("record"));
         record.add(Node::from(&self.header));
@@ -135,6 +165,8 @@ impl Record {
         root
     }
 
+    /// Decodes a section of the [Record] located at the given `offset` into a [Node] tree using
+    /// an arbitrary decode definition stored in the collateral tree.
     #[cfg(feature = "collateral_manager")]
     pub fn decode_with_decode_def<T: CollateralTree>(
         &self,
@@ -155,6 +187,8 @@ impl Record {
         Err(Error::MissingDecodeDefinitions(self.header.version.clone()))
     }
 
+    /// Decodes the whole [Record] into a [Node] tree using the decode definitions stored in the
+    /// collateral tree.
     #[cfg(feature = "collateral_manager")]
     pub fn decode<T: CollateralTree>(&self, cm: &mut CollateralManager<T>) -> Result<Node, Error> {
         if let record_types::PCORE | record_types::ECORE = self.header.version.record_type {
