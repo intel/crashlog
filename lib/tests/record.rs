@@ -24,7 +24,7 @@ foo.bar;4;8;;0";
 
     let root = record.decode_with_csv(csv.as_bytes(), 0).unwrap();
     let section = root.get_by_path("foo").unwrap();
-    assert_eq!(section.kind, NodeType::Section);
+    assert_eq!(section.kind, NodeType::Record);
     let field = root.get_by_path("foo.bar").unwrap();
     assert_eq!(field.kind, NodeType::Field { value: 0x18 });
     let field = root.get_by_path("foo.bar.baz").unwrap();
@@ -34,6 +34,42 @@ foo.bar;4;8;;0";
             value: 0x8878685848382818
         }
     );
+}
+
+#[test]
+fn relative_paths() {
+    let record = Record {
+        header: Header::default(),
+        data: vec![
+            0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D,
+            0x8E, 0x8F,
+        ],
+    };
+
+    let csv = "name;offset;size;description;bitfield
+foo;0;128;;0
+.aaa;8;8;;0
+.bbb;16;8;;0
+..ccc;24;8;;0
+foo.ddd.eee;32;8;;0
+...ddd;40;8;;0
+..fff;48;8;;0";
+
+    let root = record.decode_with_csv(csv.as_bytes(), 0).unwrap();
+    let section = root.get_by_path("foo").unwrap();
+    assert_eq!(section.kind, NodeType::Record);
+    let field = root.get_by_path("foo.aaa").unwrap();
+    assert_eq!(field.kind, NodeType::Field { value: 0x81 });
+    let field = root.get_by_path("foo.aaa.bbb").unwrap();
+    assert_eq!(field.kind, NodeType::Field { value: 0x82 });
+    let field = root.get_by_path("foo.aaa.ccc").unwrap();
+    assert_eq!(field.kind, NodeType::Field { value: 0x83 });
+    let field = root.get_by_path("foo.ddd.eee").unwrap();
+    assert_eq!(field.kind, NodeType::Field { value: 0x84 });
+    let field = root.get_by_path("foo.ddd").unwrap();
+    assert_eq!(field.kind, NodeType::Field { value: 0x85 });
+    let field = root.get_by_path("foo.fff").unwrap();
+    assert_eq!(field.kind, NodeType::Field { value: 0x86 });
 }
 
 #[test]
