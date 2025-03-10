@@ -1,7 +1,6 @@
 // Copyright (C) 2025 Intel Corporation
 // SPDX-License-Identifier: MIT
 
-use crate::header::Header;
 #[cfg(not(feature = "std"))]
 use alloc::{fmt, string::String};
 #[cfg(feature = "std")]
@@ -29,16 +28,6 @@ impl Default for PVSS {
             variant: "all".into(),
             stepping: "all".into(),
             security: "green".into(),
-        }
-    }
-}
-
-impl PVSS {
-    pub fn from_header(_header: &Header) -> Self {
-        PVSS {
-            product: "XYZ".into(),
-            variant: "all".into(),
-            ..PVSS::default()
         }
     }
 }
