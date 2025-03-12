@@ -27,7 +27,7 @@ jobs:
         run: mkdir _site/
       - name: Build library documentation
         working-directory: ./lib
-        run: cargo doc --no-deps
+        run: cargo doc --no-deps --all-features
       - name: Copy library documentation
         run: cp -a ./lib/target/doc/ ./_site/crates
       - name: Add redirect
