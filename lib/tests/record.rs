@@ -1,7 +1,9 @@
 // Copyright (C) 2025 Intel Corporation
 // SPDX-License-Identifier: MIT
+#![feature(assert_matches)]
 
 use intel_crashlog::prelude::*;
+use std::assert_matches::assert_matches;
 use std::fs;
 use std::path::Path;
 
@@ -109,4 +111,40 @@ fn header_checksum() {
     for record in region.records.iter() {
         assert!(record.checksum().unwrap())
     }
+}
+
+#[test]
+fn invalid_decode_defs() {
+    let record = Record {
+        header: Header::default(),
+        data: vec![0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87],
+    };
+
+    let csv = "name;offset;size;description;bitfield
+foo;0;64;;0
+foo.bar;=2+2;8;;0";
+    assert_matches!(
+        record.decode_with_csv(csv.as_bytes(), 0),
+        Err(Error::ParseIntError(_))
+    );
+
+    let csv = "fullname;size;offset
+aaa;4;8
+";
+    let root = record.decode_with_csv(csv.as_bytes(), 0).unwrap();
+    assert_eq!(root, Node::root());
+
+    let csv = "name;size;offset
+foo.bar;8
+";
+    let root = record.decode_with_csv(csv.as_bytes(), 0).unwrap();
+    let field = root.get_by_path("foo.bar").unwrap();
+    assert_eq!(field.kind, NodeType::Field { value: 0x80 });
+
+    let csv = "name;size;offset;size
+....foo.bar;8;0
+";
+    let root = record.decode_with_csv(csv.as_bytes(), 0).unwrap();
+    let field = root.get_by_path("foo.bar").unwrap();
+    assert_eq!(field.kind, NodeType::Field { value: 0x80 });
 }
