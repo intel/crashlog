@@ -86,8 +86,8 @@
 //! assert_eq!(status.kind, NodeType::Field { value: 0xbe000000e1840400 });
 //!
 //! // Get the instruction pointer of the first core.
-//! let status = nodes.get_by_path("core0.thread.arch_state.lip").unwrap();
-//! assert_eq!(status.kind, NodeType::Field { value: 0x6f9c2520 });
+//! let lip = nodes.get_by_path("core0.thread.arch_state.lip").unwrap();
+//! assert_eq!(lip.kind, NodeType::Field { value: 0xfffff80577036530 });
 //! ```
 //!
 //! ## Default Features
