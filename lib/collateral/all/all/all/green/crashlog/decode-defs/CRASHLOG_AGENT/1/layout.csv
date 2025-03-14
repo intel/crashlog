@@ -1,0 +1,12 @@
+name;offset;size;description;bitfield
+crashlog_agent;0;128;;0
+crashlog_agent.hdr.version;0;32;;0
+crashlog_agent.hdr.version.revision;0;8;;1
+crashlog_agent.hdr.version.header_type;8;4;;1
+crashlog_agent.hdr.version.product_id;12;12;;1
+crashlog_agent.hdr.version.record_type;24;6;;1
+crashlog_agent.hdr.version.cldic;30;1;;1
+crashlog_agent.hdr.version.consumed;31;1;;1
+crashlog_agent.hdr.size;32;32;;0
+crashlog_agent.status;64;32;;0
+crashlog_agent.instruction_pointer;96;32;;0

@@ -344,7 +344,10 @@ impl Header {
     #[cfg(feature = "collateral_manager")]
     /// Returns the [PVSS] associated to this header.
     pub fn pvss<T: CollateralTree>(&self, cm: &CollateralManager<T>) -> Result<PVSS, Error> {
-        let product = self.product(cm)?;
+        let product = match self.product(cm) {
+            Err(Error::InvalidProductID(0)) => "all",
+            res => res?,
+        };
         let variant = self.variant(cm).unwrap_or("all");
 
         Ok(PVSS {
