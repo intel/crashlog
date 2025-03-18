@@ -32,7 +32,12 @@ impl<T: CollateralTree> CollateralManager<T> {
         self.target_info.clear();
         let path = ItemPath::new(["target_info.json"]);
         for pvss in self.tree.search(&path)? {
-            let target_info: TargetInfo = serde_json::from_slice(&self.tree.get(&pvss, &path)?)?;
+            let res = serde_json::from_slice::<TargetInfo>(&self.tree.get(&pvss, &path)?)
+                .inspect_err(|err| log::warn!("Invalid target info ({pvss}): {err}"));
+
+            let Ok(target_info) = res else {
+                continue;
+            };
 
             let product_id = if target_info.product_id.starts_with("0x") {
                 u32::from_str_radix(&target_info.product_id[2..], 16)

@@ -22,6 +22,7 @@ fn get_with_pvss() {
 #[test]
 fn target_info() {
     let cm = CollateralManager::file_system_tree(Path::new(COLLATERAL_TREE_PATH)).unwrap();
+    assert_eq!(cm.target_info.len(), 1);
     assert_eq!(cm.target_info.get(&0x07A).unwrap().product, "XYZ");
 }
 
