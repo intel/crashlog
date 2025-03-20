@@ -142,9 +142,17 @@ impl Record {
         decode_def: &str,
         offset: usize,
     ) -> Result<Node, Error> {
-        let mut path = self.header.decode_definitions_path(cm)?;
-        path.push(decode_def);
-        self.decode_with_csv(cm.get_item_with_header(&self.header, path)?, offset)
+        let paths = self.header.decode_definitions_paths(cm)?;
+
+        for mut path in paths {
+            path.push(decode_def);
+            let Ok(layout) = cm.get_item_with_header(&self.header, path) else {
+                continue;
+            };
+            return self.decode_with_csv(layout, offset);
+        }
+
+        Err(Error::MissingDecodeDefinitions(self.header.version.clone()))
     }
 
     #[cfg(feature = "collateral_manager")]

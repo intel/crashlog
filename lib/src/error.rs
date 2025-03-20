@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: MIT
 
 #[cfg(feature = "collateral_manager")]
-use crate::collateral::{ItemPath, PVSS};
+use crate::{
+    collateral::{ItemPath, PVSS},
+    header::Version,
+};
 #[cfg(not(feature = "std"))]
 use alloc::{fmt, str};
 #[cfg(not(feature = "std"))]
@@ -18,6 +21,8 @@ pub enum Error {
     NoCrashLogFound,
     #[cfg(feature = "collateral_manager")]
     MissingCollateral(PVSS, ItemPath),
+    #[cfg(feature = "collateral_manager")]
+    MissingDecodeDefinitions(Version),
     InvalidBootErrorRecordRegion,
     InvalidHeader,
     InvalidHeaderType(u16),
@@ -45,6 +50,10 @@ impl fmt::Display for Error {
             #[cfg(feature = "collateral_manager")]
             Error::MissingCollateral(pvss, item) => {
                 write!(f, "Missing {item} collateral file for {pvss}")
+            }
+            #[cfg(feature = "collateral_manager")]
+            Error::MissingDecodeDefinitions(version) => {
+                write!(f, "Missing decode definitions for {version}")
             }
             Error::InvalidBootErrorRecordRegion => write!(f, "Invalid Boot Error Record region"),
             Error::InvalidHeader => write!(f, "Invalid Crash Log Header"),

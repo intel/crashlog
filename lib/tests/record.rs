@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 #![feature(assert_matches)]
 
+use intel_crashlog::header::{RecordSize, Version};
 use intel_crashlog::prelude::*;
 use std::assert_matches::assert_matches;
 use std::fs;
@@ -85,6 +86,55 @@ fn decode() {
     let root = record.decode(&mut cm).unwrap();
     let version = root.get_by_path("mca.hdr.version.revision").unwrap();
     assert_eq!(version.kind, NodeType::Field { value: 1 });
+}
+
+#[test]
+fn decode_generic() {
+    let record = Record {
+        header: Header {
+            version: Version {
+                record_type: 0x3e,
+                product_id: 0x7a,
+                revision: 42,
+                ..Default::default()
+            },
+            size: RecordSize {
+                record_size: 1,
+                ..Default::default()
+            },
+            ..Default::default()
+        },
+        data: vec![0x42, 0, 0, 0],
+    };
+
+    let mut cm = CollateralManager::file_system_tree(Path::new(COLLATERAL_TREE_PATH)).unwrap();
+    let root = record.decode(&mut cm).unwrap();
+    let foo = root.get_by_path("mca.foo").unwrap();
+    assert_eq!(foo.kind, NodeType::Field { value: 0x42 });
+}
+
+#[test]
+fn decode_missing_decode_defs() {
+    let record = Record {
+        header: Header {
+            version: Version {
+                record_type: 0x3e,
+                product_id: 0x1c,
+                revision: 42,
+                ..Default::default()
+            },
+            size: RecordSize {
+                record_size: 1,
+                ..Default::default()
+            },
+            ..Default::default()
+        },
+        data: vec![0x42],
+    };
+
+    let mut cm = CollateralManager::file_system_tree(Path::new(COLLATERAL_TREE_PATH)).unwrap();
+    let root = record.decode(&mut cm);
+    assert_matches!(root, Err(Error::MissingDecodeDefinitions(_)));
 }
 
 #[test]
