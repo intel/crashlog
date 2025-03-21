@@ -11,6 +11,7 @@ use crate::node::Node;
 use alloc::{
     fmt, format,
     string::{String, ToString},
+    vec,
     vec::Vec,
 };
 #[cfg(feature = "std")]
@@ -307,37 +308,30 @@ impl Header {
 
     /// Returns the type of the record.
     pub fn record_type(&self) -> Result<&'static str, Error> {
-        Ok(match self.version.record_type {
-            record_types::PMC => "PMC",
-            record_types::PMC_FW_TRACE => "PMC_FW_Trace",
-            record_types::PUNIT => "Punit",
-            record_types::PCORE => "PCORE",
-            record_types::ECORE => "ECORE",
-            record_types::UNCORE => "UNCORE",
-            record_types::PMC_TRACE => "PMC_TRACE",
-            record_types::TCSS => "TCSS",
-            record_types::PMC_RST => "PMC_RST",
-            record_types::PCODE => "PCODE",
-            record_types::CRASHLOG_AGENT => "CRASHLOG_AGENT",
-            record_types::BOX => "BOX",
-            record_types::MCA => "MCA",
-            rt => return Err(Error::InvalidRecordType(rt)),
-        })
+        self.version.record_type_as_str()
     }
 
     #[cfg(feature = "collateral_manager")]
-    pub(super) fn decode_definitions_path<T: CollateralTree>(
+    pub(super) fn decode_definitions_paths<T: CollateralTree>(
         &self,
         cm: &CollateralManager<T>,
-    ) -> Result<ItemPath, Error> {
+    ) -> Result<Vec<ItemPath>, Error> {
         let record_type = self.record_type()?;
         let revision = self.revision().to_string();
 
         Ok(if let Some(die) = self.die(cm) {
             let die_id = die.trim_end_matches(char::is_numeric);
-            ItemPath::new(["decode-defs", record_type, die_id, &revision])
+            vec![ItemPath::new([
+                "decode-defs",
+                record_type,
+                die_id,
+                &revision,
+            ])]
         } else {
-            ItemPath::new(["decode-defs", record_type, &revision])
+            vec![
+                ItemPath::new(["decode-defs", record_type, &revision]),
+                ItemPath::new(["decode-defs", record_type, "all"]),
+            ]
         })
     }
 
@@ -403,7 +397,7 @@ impl fmt::Display for Header {
 }
 
 /// Version of the Crash Log record
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Version {
     /// Revision of the record
     pub revision: u32,
@@ -447,6 +441,32 @@ impl Version {
             | (self.product_id << 12)
             | ((self.header_type as u32) << 8)
             | self.revision
+    }
+
+    fn record_type_as_str(&self) -> Result<&'static str, Error> {
+        Ok(match self.record_type {
+            record_types::PMC => "PMC",
+            record_types::PMC_FW_TRACE => "PMC_FW_Trace",
+            record_types::PUNIT => "Punit",
+            record_types::PCORE => "PCORE",
+            record_types::ECORE => "ECORE",
+            record_types::UNCORE => "UNCORE",
+            record_types::PMC_TRACE => "PMC_TRACE",
+            record_types::TCSS => "TCSS",
+            record_types::PMC_RST => "PMC_RST",
+            record_types::PCODE => "PCODE",
+            record_types::CRASHLOG_AGENT => "CRASHLOG_AGENT",
+            record_types::BOX => "BOX",
+            record_types::MCA => "MCA",
+            rt => return Err(Error::InvalidRecordType(rt)),
+        })
+    }
+}
+
+impl fmt::Display for Version {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let record_type = self.record_type_as_str().unwrap_or("UNKNOWN");
+        write!(f, "{} revision {}", record_type, self.revision)
     }
 }
 
