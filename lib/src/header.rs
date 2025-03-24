@@ -607,6 +607,7 @@ impl From<&Header> for Node {
                     "record_collection_completed",
                     collection_complete as u64,
                 ));
+                node.add(die_skt_info);
 
                 for (i, completion_status) in completion_status.iter().enumerate() {
                     node.add(Node::field(

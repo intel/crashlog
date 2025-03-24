@@ -151,6 +151,12 @@ fn header_type6_decode() {
         .unwrap();
 
     assert_eq!(version.kind, NodeType::Field { value: 2 });
+
+    let die_id = root
+        .get_by_path("processors.cpu0.die1.mca.hdr.die_skt_info.die_id")
+        .unwrap();
+
+    assert_eq!(die_id.kind, NodeType::Field { value: 1 });
 }
 
 #[test]
