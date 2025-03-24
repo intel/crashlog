@@ -38,6 +38,16 @@ pub fn info<T: CollateralTree>(cm: &CollateralManager<T>, input: &Path) -> Resul
                 .checksum()
                 .map_or("", |check| if check { "Valid" } else { "Invalid" });
 
+            let die = if let Some(die_id) = record.header.die(cm) {
+                die_id
+            } else {
+                &record
+                    .header
+                    .die_id()
+                    .map(|die_id| die_id.to_string())
+                    .unwrap_or_default()
+            };
+
             println!(
                 "{:>2}-{:<2} {:<16} {:>5} {:<8} {:>6} {:>4} {:<9} {}",
                 i,
@@ -48,7 +58,7 @@ pub fn info<T: CollateralTree>(cm: &CollateralManager<T>, input: &Path) -> Resul
                 record.header.record_size(),
                 record.header.socket_id(),
                 checksum,
-                record.header.die(cm).unwrap_or(""),
+                die
             );
         }
     }
