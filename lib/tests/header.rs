@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use intel_crashlog::prelude::*;
+use std::fs;
 use std::path::Path;
 
 const COLLATERAL_TREE_PATH: &str = "tests/collateral";
@@ -55,4 +56,18 @@ fn decode_header_to_node() {
         node.get_by_path("version.product_id").unwrap().kind,
         NodeType::Field { value: 0x7a }
     );
+}
+
+#[test]
+fn decode_die_id_header() {
+    let cm = CollateralManager::file_system_tree(Path::new(COLLATERAL_TREE_PATH)).unwrap();
+
+    let data = fs::read("tests/samples/dummy_mca_rev2.crashlog").unwrap();
+    let header = Header::from_slice(&data).unwrap().unwrap();
+
+    let die_id = header.die_id().unwrap();
+    assert_eq!(die_id, 1);
+
+    let die = header.die(&cm).unwrap();
+    assert_eq!(die, "io1");
 }

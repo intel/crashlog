@@ -302,7 +302,7 @@ impl Header {
     #[cfg(feature = "collateral_manager")]
     pub fn die<'a, T: CollateralTree>(&self, cm: &'a CollateralManager<T>) -> Option<&'a str> {
         let target_info = cm.target_info.get(&self.product_id())?;
-        let die_id = target_info.die_id.get(&self.die_id()?.to_string())?;
+        let die_id = target_info.die_id.get(&self.die_id()?)?;
         Some(die_id)
     }
 

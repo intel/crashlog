@@ -6,7 +6,7 @@ use crate::Error;
 use crate::utils::Map;
 #[cfg(not(feature = "std"))]
 use alloc::string::String;
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 
 /// Stores various product information
 #[derive(Debug, Deserialize)]
@@ -19,12 +19,28 @@ pub struct TargetInfo {
     #[serde(default = "default_variant")]
     pub variant: String,
     /// Die IDs/names
-    #[serde(default)]
-    pub die_id: Map<String, String>,
+    #[serde(default, deserialize_with = "deserialize_die_ids")]
+    pub die_id: Map<u8, String>,
 }
 
 fn default_variant() -> String {
     String::from("all")
+}
+
+fn deserialize_die_ids<'de, D>(deserializer: D) -> Result<Map<u8, String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let map: Map<String, String> = Deserialize::deserialize(deserializer)?;
+    Ok(map
+        .into_iter()
+        .filter_map(|(key, value)| {
+            key.parse::<u8>()
+                .inspect_err(|_| log::warn!("Invalid die ID value: {key}"))
+                .ok()
+                .map(|k| (k, value))
+        })
+        .collect())
 }
 
 impl<T: CollateralTree> CollateralManager<T> {
