@@ -36,7 +36,10 @@ pub struct Args {
     pub help: bool,
     pub wait: bool,
     pub command: Option<Command>,
+    pub verbosity: usize,
 }
+
+const MAX_VERBOSITY_LEVEL: usize = 3;
 
 impl Args {
     pub fn parse() -> Result<Self, ArgsError> {
@@ -70,6 +73,12 @@ impl Args {
             match token.as_str() {
                 "-h" | "--help" => args.help = true,
                 "-w" | "--wait" => args.wait = true,
+
+                s if s.starts_with("-v") => {
+                    let count = s.matches('v').count().min(MAX_VERBOSITY_LEVEL);
+                    args.verbosity += count;
+                }
+
                 "extract" => {
                     args.command = Some(Command::Extract {
                         output_path: tokens.next().map(PathBuf::from),
@@ -141,7 +150,8 @@ impl Args {
         }
 
         println!("Options:");
-        println!("     -h, --help   print this help");
-        println!("     -w, --wait   wait for input before exiting");
+        println!("     -h, --help      print this help");
+        println!("     -w, --wait      wait for input before exiting");
+        println!("     -v, -vv, --vvv  set the verbosity level (warn, info, debug, trace)");
     }
 }

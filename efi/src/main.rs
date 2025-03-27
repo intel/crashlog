@@ -18,6 +18,7 @@ use uefi::proto::console::text::Input;
 
 use crate::args::Args;
 use crate::args::Command;
+use log::{LevelFilter, error};
 
 fn run_command(args: &Args) -> Result<(), uefi::Error> {
     if args.help {
@@ -65,14 +66,26 @@ fn run_command_and_wait(args: &Args) -> Result<(), uefi::Error> {
 fn main() -> Status {
     uefi::helpers::init().unwrap();
 
+    log::set_max_level(LevelFilter::Error);
+
     match Args::parse() {
-        Ok(args) => match run_command_and_wait(&args) {
-            Ok(_) => Status::SUCCESS,
-            Err(err) => err.status(),
-        },
+        Ok(args) => {
+            log::set_max_level(match args.verbosity {
+                0 => LevelFilter::Error,
+                1 => LevelFilter::Warn,
+                2 => LevelFilter::Info,
+                3 => LevelFilter::Debug,
+                _ => LevelFilter::Trace,
+            });
+
+            match run_command_and_wait(&args) {
+                Ok(_) => Status::SUCCESS,
+                Err(err) => err.status(),
+            }
+        }
         Err(err) => {
-            println!("{err}");
-            println!("Use --help option for more information.");
+            error!("{err}");
+            error!("Use --help option for more information.");
             Status::INVALID_PARAMETER
         }
     }
