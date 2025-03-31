@@ -147,13 +147,13 @@ fn header_type6_decode() {
 
     let root = record.decode(&mut cm).unwrap();
     let version = root
-        .get_by_path("processors.cpu0.die1.mca.hdr.version.revision")
+        .get_by_path("processors.cpu0.io1.mca.hdr.version.revision")
         .unwrap();
 
     assert_eq!(version.kind, NodeType::Field { value: 2 });
 
     let die_id = root
-        .get_by_path("processors.cpu0.die1.mca.hdr.die_skt_info.die_id")
+        .get_by_path("processors.cpu0.io1.mca.hdr.die_skt_info.die_id")
         .unwrap();
 
     assert_eq!(die_id.kind, NodeType::Field { value: 1 });

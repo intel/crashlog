@@ -52,11 +52,6 @@ impl Record {
 
     pub fn decode_with_csv(&self, layout: &[u8], offset: usize) -> Result<Node, Error> {
         let mut root = Node::root();
-        let record_root = if let Some(custom_root) = self.header.get_root_path() {
-            root.create_hierarchy(&custom_root)
-        } else {
-            &mut root
-        };
 
         let csv = str::from_utf8(layout)?;
         let mut columns = Vec::new();
@@ -97,9 +92,9 @@ impl Record {
                 current_path.clear();
                 current_path.push(top.to_owned());
 
-                if record_root.get(top).is_none() {
+                if root.get(top).is_none() {
                     // Top-level is assumed to be the record name
-                    record_root.add(Node::record(top));
+                    root.add(Node::record(top));
                 }
             }
 
@@ -111,7 +106,7 @@ impl Record {
                 }
             }
 
-            let node = record_root.create_hierarchy_from_iter(&current_path);
+            let node = root.create_hierarchy_from_iter(&current_path);
             node.description = entry.description;
             if let Some(value) = self.read_field(offset * 8 + entry.offset, entry.size) {
                 node.kind = NodeType::Field { value }
@@ -144,12 +139,20 @@ impl Record {
     ) -> Result<Node, Error> {
         let paths = self.header.decode_definitions_paths(cm)?;
 
+        let mut root = Node::root();
+        let record_root = if let Some(custom_root) = self.header.get_root_path_cm(cm) {
+            root.create_hierarchy(&custom_root)
+        } else {
+            &mut root
+        };
+
         for mut path in paths {
             path.push(decode_def);
             let Ok(layout) = cm.get_item_with_header(&self.header, path) else {
                 continue;
             };
-            return self.decode_with_csv(layout, offset);
+            record_root.merge(self.decode_with_csv(layout, offset)?);
+            return Ok(root);
         }
 
         Err(Error::MissingDecodeDefinitions(self.header.version.clone()))

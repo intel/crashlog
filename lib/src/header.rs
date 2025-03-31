@@ -366,12 +366,28 @@ impl Header {
         }
     }
 
+    #[cfg(feature = "collateral_manager")]
+    pub(super) fn get_root_path_cm<T: CollateralTree>(
+        &self,
+        cm: &CollateralManager<T>,
+    ) -> Option<String> {
+        if let HeaderType::Type6 { socket_id, .. } = self.header_type {
+            if let Some(die) = self.die(cm) {
+                Some(format!("processors.cpu{socket_id}.{die}"))
+            } else {
+                self.get_root_path()
+            }
+        } else {
+            None
+        }
+    }
+
     pub(super) fn get_root_path(&self) -> Option<String> {
         if let HeaderType::Type6 {
             socket_id, die_id, ..
         } = self.header_type
         {
-            Some(format!("processors.cpu{}.die{}", socket_id, die_id))
+            Some(format!("processors.cpu{socket_id}.die{die_id}"))
         } else {
             None
         }
