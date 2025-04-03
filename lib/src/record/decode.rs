@@ -146,12 +146,23 @@ impl Record {
 
     /// Decodes the [Record] header into a [Node] tree.
     pub fn basic_decode(&self) -> Node {
+        let root_path = self.header.get_root_path();
+        self.decode_header(&root_path)
+    }
+
+    #[cfg(feature = "collateral_manager")]
+    fn basic_decode_cm<T: CollateralTree>(&self, cm: &mut CollateralManager<T>) -> Node {
+        let root_path = self.header.get_root_path_cm(cm);
+        self.decode_header(&root_path)
+    }
+
+    fn decode_header(&self, root_path: &Option<String>) -> Node {
         let mut record = Node::record(self.header.record_type().unwrap_or("record"));
         record.add(Node::from(&self.header));
 
         let mut root = Node::root();
-        let record_root = if let Some(custom_root) = self.header.get_root_path() {
-            root.create_hierarchy(&custom_root)
+        let record_root = if let Some(custom_root) = root_path {
+            root.create_hierarchy(custom_root)
         } else {
             &mut root
         };
@@ -193,11 +204,20 @@ impl Record {
     /// Decodes the whole [Record] into a [Node] tree using the decode definitions stored in the
     /// collateral tree.
     #[cfg(feature = "collateral_manager")]
-    pub fn decode<T: CollateralTree>(&self, cm: &mut CollateralManager<T>) -> Result<Node, Error> {
-        if let record_types::PCORE | record_types::ECORE = self.header.version.record_type {
-            return self.decode_as_core_record(cm);
-        }
+    pub fn decode<T: CollateralTree>(&self, cm: &mut CollateralManager<T>) -> Node {
+        let root =
+            if let record_types::PCORE | record_types::ECORE = self.header.version.record_type {
+                self.decode_as_core_record(cm)
+            } else {
+                self.decode_with_decode_def(cm, "layout.csv", 0)
+            };
 
-        self.decode_with_decode_def(cm, "layout.csv", 0)
+        match root {
+            Ok(node) => node,
+            Err(err) => {
+                log::warn!("Cannot decode record: {err}. Only the header fields will be decoded.");
+                self.basic_decode_cm(cm)
+            }
+        }
     }
 }

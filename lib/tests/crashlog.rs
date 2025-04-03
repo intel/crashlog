@@ -26,7 +26,7 @@ fn crashlog_decode() {
     let mca = root.get_by_path("mca");
     assert!(mca.is_some());
 
-    let crashlog_agent = root.get_by_path("processors.cpu0.die0.crashlog_agent");
+    let crashlog_agent = root.get_by_path("processors.cpu0.io0.crashlog_agent");
     assert!(crashlog_agent.is_some());
 }
 

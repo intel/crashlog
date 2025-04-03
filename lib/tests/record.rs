@@ -83,7 +83,7 @@ fn decode() {
     let header = Header::from_slice(&data).unwrap().unwrap();
     let record = Record { header, data };
 
-    let root = record.decode(&mut cm).unwrap();
+    let root = record.decode(&mut cm);
     let version = root.get_by_path("mca.hdr.version.revision").unwrap();
     assert_eq!(version.kind, NodeType::Field { value: 1 });
 }
@@ -108,7 +108,7 @@ fn decode_generic() {
     };
 
     let mut cm = CollateralManager::file_system_tree(Path::new(COLLATERAL_TREE_PATH)).unwrap();
-    let root = record.decode(&mut cm).unwrap();
+    let root = record.decode(&mut cm);
     let foo = root.get_by_path("mca.foo").unwrap();
     assert_eq!(foo.kind, NodeType::Field { value: 0x42 });
 }
@@ -134,7 +134,12 @@ fn decode_missing_decode_defs() {
 
     let mut cm = CollateralManager::file_system_tree(Path::new(COLLATERAL_TREE_PATH)).unwrap();
     let root = record.decode(&mut cm);
-    assert_matches!(root, Err(Error::MissingDecodeDefinitions(_)));
+
+    let revision = root.get_by_path("mca.hdr.version.revision").unwrap();
+    assert_eq!(revision.kind, NodeType::Field { value: 42 });
+
+    let record_size = root.get_by_path("mca.hdr.record_size.record_size").unwrap();
+    assert_eq!(record_size.kind, NodeType::Field { value: 1 });
 }
 
 #[test]
@@ -145,7 +150,7 @@ fn header_type6_decode() {
     let header = Header::from_slice(&data).unwrap().unwrap();
     let record = Record { header, data };
 
-    let root = record.decode(&mut cm).unwrap();
+    let root = record.decode(&mut cm);
     let version = root
         .get_by_path("processors.cpu0.io1.mca.hdr.version.revision")
         .unwrap();

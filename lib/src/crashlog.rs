@@ -155,13 +155,7 @@ impl CrashLog {
         let mut root = Node::root();
         for region in self.regions.iter() {
             for record in region.records.iter() {
-                root.merge(match record.decode(cm) {
-                    Ok(node) => node,
-                    Err(err) => {
-                        log::warn!("Cannot decode record: {err}");
-                        record.basic_decode()
-                    }
-                })
+                root.merge(record.decode(cm))
             }
         }
         root
