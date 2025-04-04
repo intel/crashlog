@@ -41,7 +41,7 @@ pub fn extract(output_path: Option<&Path>) {
                 }
 
                 println!("{}", path.display());
-                std::fs::write(path, crashlog.to_bytes()).expect("failed to write Crash Log file")
+                std::fs::write(path, crashlog.to_bytes()).expect("Failed to write Crash Log file")
             }
         }
         Err(err) => log::error!("Failed to extract Crash Log: {err}"),

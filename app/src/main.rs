@@ -18,7 +18,7 @@ struct Cli {
     #[arg(short, long, value_name = "dir")]
     collateral_tree: Option<PathBuf>,
 
-    /// Sets the verbosity of the logging messages.
+    /// Sets the verbosity of the logging messages
     /// -v: Warning, -vv: Info, -vvv: Debug, -vvvv: Trace
     #[arg(short = 'v', long = "verbose", action = clap::ArgAction::Count)]
     verbosity: u8,
