@@ -160,6 +160,24 @@ impl Record {
         root
     }
 
+    /// Decodes the [Record] header into a [Node] tree and renames the die ID if its specified in
+    /// the collateral tree
+    #[cfg(feature = "collateral_manager")]
+    pub fn basic_decode_cm<T: CollateralTree>(&self, cm: &mut CollateralManager<T>) -> Node {
+        let mut record = Node::record(self.header.record_type().unwrap_or("record"));
+        record.add(Node::from(&self.header));
+
+        let mut root = Node::root();
+        let record_root = if let Some(custom_root) = self.header.get_root_path_cm(cm) {
+            root.create_hierarchy(&custom_root)
+        } else {
+            &mut root
+        };
+
+        record_root.add(record);
+        root
+    }
+
     /// Decodes a section of the [Record] located at the given `offset` into a [Node] tree using
     /// an arbitrary decode definition stored in the collateral tree.
     #[cfg(feature = "collateral_manager")]
