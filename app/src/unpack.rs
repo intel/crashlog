@@ -31,8 +31,10 @@ fn unpack_evtx(evtx: &Path) -> Result<(), Error> {
 
 fn unpack_crashlog(input_file: &Path) -> Result<(), Error> {
     let crashlog = CrashLog::from_slice(&std::fs::read(input_file)?)?;
-    let mut path = PathBuf::from(input_file);
+    let path_prefix = PathBuf::from(input_file);
+
     for (i, region) in crashlog.regions.iter().enumerate() {
+        let mut path = path_prefix.clone(); // Clone the original path prefix for each iteration
         if let Some(filename) = path.file_stem() {
             path.set_file_name(format!(
                 "{}_region{i}.crashlog",
