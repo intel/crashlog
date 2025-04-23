@@ -145,13 +145,13 @@ impl Record {
     }
 
     /// Decodes the [Record] header into a [Node] tree.
-    pub fn basic_decode(&self) -> Node {
+    pub fn decode_without_cm(&self) -> Node {
         let root_path = self.header.get_root_path();
         self.decode_header(&root_path)
     }
 
     #[cfg(feature = "collateral_manager")]
-    fn basic_decode_cm<T: CollateralTree>(&self, cm: &mut CollateralManager<T>) -> Node {
+    fn decode_header_using_cm<T: CollateralTree>(&self, cm: &mut CollateralManager<T>) -> Node {
         let root_path = self.header.get_root_path_cm(cm);
         self.decode_header(&root_path)
     }
@@ -216,7 +216,7 @@ impl Record {
             Ok(node) => node,
             Err(err) => {
                 log::warn!("Cannot decode record: {err}. Only the header fields will be decoded.");
-                self.basic_decode_cm(cm)
+                self.decode_header_using_cm(cm)
             }
         }
     }

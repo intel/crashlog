@@ -90,7 +90,7 @@ let crashlog = CrashLog::from_slice(&data).unwrap();
 assert_eq!(crashlog.regions[0].records[0].header.version.revision, 1);
 
 // Decode the headers of the Crash Log records into a register tree
-let nodes = crashlog.basic_decode();
+let nodes = crashlog.decode_without_cm();
 
 // Export the register tree to JSON
 assert_eq!(

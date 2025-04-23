@@ -33,7 +33,7 @@ pub fn decode(input_path: &Path) -> Result<(), uefi::Error> {
 
     let nodes = match CollateralManager::embedded_tree() {
         Ok(mut cm) => crashlog.decode(&mut cm),
-        Err(_) => crashlog.basic_decode(),
+        Err(_) => crashlog.decode_without_cm(),
     };
 
     let serialized_data =

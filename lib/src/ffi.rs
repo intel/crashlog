@@ -252,7 +252,7 @@ pub unsafe extern "C" fn crashlog_decode(
     }
     #[cfg(not(feature = "embedded_collateral_tree"))]
     {
-        alloc(crashlog.basic_decode())
+        alloc(crashlog.decode_without_cm())
     }
 }
 

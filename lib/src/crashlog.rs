@@ -139,11 +139,11 @@ impl CrashLog {
     }
 
     /// Returns the register tree representation of the Crash Log record headers.
-    pub fn basic_decode(&self) -> Node {
+    pub fn decode_without_cm(&self) -> Node {
         let mut root = Node::root();
         for region in self.regions.iter() {
             for record in region.records.iter() {
-                root.merge(record.basic_decode())
+                root.merge(record.decode_without_cm())
             }
         }
         root
