@@ -11,11 +11,23 @@ use crate::header::Header;
 use alloc::vec::Vec;
 
 /// A single Crash Log record
+#[derive(Default)]
 pub struct Record {
     /// Header of the record
     pub header: Header,
     /// Raw content of the record
     pub data: Vec<u8>,
+    /// Additional information provided to the record
+    pub context: Context,
+}
+
+/// Additional data provided to a Crash Log record
+#[derive(Clone, Default)]
+pub struct Context {
+    /// Die ID of the record
+    pub die_id: Option<u8>,
+    /// Socket ID of the record
+    pub socket_id: Option<u8>,
 }
 
 impl Record {

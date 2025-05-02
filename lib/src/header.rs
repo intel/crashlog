@@ -301,9 +301,18 @@ impl Header {
     /// This requires a [CollateralManager] as the die names are product-specific.
     #[cfg(feature = "collateral_manager")]
     pub fn die<'a, T: CollateralTree>(&self, cm: &'a CollateralManager<T>) -> Option<&'a str> {
+        self.get_die_name(&self.die_id()?, cm)
+    }
+
+    #[cfg(feature = "collateral_manager")]
+    pub(crate) fn get_die_name<'a, T: CollateralTree>(
+        &self,
+        die_id: &u8,
+        cm: &'a CollateralManager<T>,
+    ) -> Option<&'a str> {
         let target_info = cm.target_info.get(&self.product_id())?;
-        let die_id = target_info.die_id.get(&self.die_id()?)?;
-        Some(die_id)
+        let die_name = target_info.die_id.get(die_id)?;
+        Some(die_name)
     }
 
     /// Returns the type of the record.
@@ -367,7 +376,7 @@ impl Header {
     }
 
     #[cfg(feature = "collateral_manager")]
-    pub(super) fn get_root_path_cm<T: CollateralTree>(
+    pub(super) fn get_root_path_using_cm<T: CollateralTree>(
         &self,
         cm: &CollateralManager<T>,
     ) -> Option<String> {

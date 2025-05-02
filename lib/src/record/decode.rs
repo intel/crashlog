@@ -9,7 +9,7 @@ use crate::header::record_types;
 use crate::node::Node;
 use crate::node::NodeType;
 #[cfg(not(feature = "std"))]
-use alloc::{borrow::ToOwned, str, string::String, vec::Vec};
+use alloc::{borrow::ToOwned, format, str, string::String, vec::Vec};
 use log::debug;
 #[cfg(feature = "std")]
 use std::str;
@@ -70,6 +70,7 @@ impl Record {
     /// let record = Record {
     ///     header: Header::default(),
     ///     data: vec![0x42],
+    ///     ..Record::default()
     /// };
     ///
     /// let csv = "name;offset;size;description;bitfield
@@ -146,13 +147,13 @@ impl Record {
 
     /// Decodes the [Record] header into a [Node] tree.
     pub fn decode_without_cm(&self) -> Node {
-        let root_path = self.header.get_root_path();
+        let root_path = self.get_root_path();
         self.decode_header(&root_path)
     }
 
     #[cfg(feature = "collateral_manager")]
     fn decode_header_using_cm<T: CollateralTree>(&self, cm: &mut CollateralManager<T>) -> Node {
-        let root_path = self.header.get_root_path_cm(cm);
+        let root_path = self.get_root_path_using_cm(cm);
         self.decode_header(&root_path)
     }
 
@@ -171,6 +172,38 @@ impl Record {
         root
     }
 
+    fn get_root_path(&self) -> Option<String> {
+        if let Some(custom_root) = self.header.get_root_path() {
+            return Some(custom_root);
+        }
+        if let (Some(socket_id), Some(die_id)) = (self.context.socket_id, self.context.die_id) {
+            return Some(format!("processors.cpu{socket_id}.die{die_id}"));
+        }
+
+        None
+    }
+
+    #[cfg(feature = "collateral_manager")]
+    fn get_root_path_using_cm<T: CollateralTree>(
+        &self,
+        cm: &mut CollateralManager<T>,
+    ) -> Option<String> {
+        if let Some(custom_root) = self.header.get_root_path_using_cm(cm) {
+            return Some(custom_root);
+        }
+
+        if let (Some(socket_id), Some(die_id)) = (self.context.socket_id, self.context.die_id) {
+            let die = if let Some(die_name) = self.header.get_die_name(&die_id, cm) {
+                die_name
+            } else {
+                &format!("die{die_id}")
+            };
+            return Some(format!("processors.cpu{socket_id}.{die}"));
+        }
+
+        None
+    }
+
     /// Decodes a section of the [Record] located at the given `offset` into a [Node] tree using
     /// an arbitrary decode definition stored in the collateral tree.
     #[cfg(feature = "collateral_manager")]
@@ -183,7 +216,7 @@ impl Record {
         let paths = self.header.decode_definitions_paths(cm)?;
 
         let mut root = Node::root();
-        let record_root = if let Some(custom_root) = self.header.get_root_path_cm(cm) {
+        let record_root = if let Some(custom_root) = self.get_root_path_using_cm(cm) {
             root.create_hierarchy(&custom_root)
         } else {
             &mut root

@@ -35,6 +35,13 @@ impl Region {
         }
     }
 
+    pub(crate) fn set_socket_and_die_ids(&mut self, socket_id: u8, die_id: u8) {
+        for record in self.records.iter_mut() {
+            record.context.socket_id = Some(socket_id);
+            record.context.die_id = Some(die_id);
+        }
+    }
+
     pub fn from_slice(bytes: &[u8]) -> Result<Self, Error> {
         let mut region = Region::default();
         let mut cursor = 0;
@@ -81,6 +88,7 @@ impl Region {
             region.records.push(Record {
                 header,
                 data: bytes[cursor..limit.min(bytes.len())].into(),
+                ..Default::default()
             });
 
             cursor += record_size;

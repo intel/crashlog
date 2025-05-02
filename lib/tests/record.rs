@@ -18,6 +18,7 @@ fn basic_decode() {
             0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D,
             0x8E, 0x8F,
         ],
+        ..Default::default()
     };
 
     let csv = "name;offset;size;description;bitfield
@@ -47,6 +48,7 @@ fn relative_paths() {
             0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D,
             0x8E, 0x8F,
         ],
+        ..Default::default()
     };
 
     let csv = "name;offset;size;description;bitfield
@@ -81,7 +83,11 @@ fn decode() {
 
     let data = fs::read("tests/samples/dummy_mca_rev1.crashlog").unwrap();
     let header = Header::from_slice(&data).unwrap().unwrap();
-    let record = Record { header, data };
+    let record = Record {
+        header,
+        data,
+        ..Default::default()
+    };
 
     let root = record.decode(&mut cm);
     let version = root.get_by_path("mca.hdr.version.revision").unwrap();
@@ -105,6 +111,7 @@ fn decode_generic() {
             ..Default::default()
         },
         data: vec![0x42, 0, 0, 0],
+        ..Default::default()
     };
 
     let mut cm = CollateralManager::file_system_tree(Path::new(COLLATERAL_TREE_PATH)).unwrap();
@@ -130,6 +137,7 @@ fn decode_missing_decode_defs() {
             ..Default::default()
         },
         data: vec![0x42],
+        ..Default::default()
     };
 
     let mut cm = CollateralManager::file_system_tree(Path::new(COLLATERAL_TREE_PATH)).unwrap();
@@ -148,7 +156,11 @@ fn header_type6_decode() {
 
     let data = fs::read("tests/samples/dummy_mca_rev2.crashlog").unwrap();
     let header = Header::from_slice(&data).unwrap().unwrap();
-    let record = Record { header, data };
+    let record = Record {
+        header,
+        data,
+        ..Default::default()
+    };
 
     let root = record.decode(&mut cm);
     let version = root
@@ -179,6 +191,7 @@ fn invalid_decode_defs() {
     let record = Record {
         header: Header::default(),
         data: vec![0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87],
+        ..Default::default()
     };
 
     let csv = "name;offset;size;description;bitfield
@@ -208,4 +221,20 @@ foo.bar;8
     let root = record.decode_with_csv(csv.as_bytes(), 0).unwrap();
     let field = root.get_by_path("foo.bar").unwrap();
     assert_eq!(field.kind, NodeType::Field { value: 0x80 });
+}
+
+#[test]
+fn box_header_type6() {
+    let mut cm = CollateralManager::file_system_tree(Path::new(COLLATERAL_TREE_PATH)).unwrap();
+    let data = fs::read("tests/samples/dummy_mca_rev1_box.crashlog").unwrap();
+
+    let crashlog = CrashLog::from_slice(&data).unwrap();
+
+    let root = crashlog.decode(&mut cm);
+
+    let header_type = root
+        .get_by_path("processors.cpu1.io0.mca.hdr.version.header_type")
+        .unwrap();
+
+    assert_eq!(header_type.kind, NodeType::Field { value: 3 })
 }

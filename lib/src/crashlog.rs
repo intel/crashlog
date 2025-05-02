@@ -20,6 +20,7 @@ use std::collections::VecDeque;
 #[cfg(target_os = "uefi")]
 use uefi_raw::table::system::SystemTable;
 
+use crate::header::HeaderType;
 use crate::header::record_types;
 
 /// Set of all the Crash Log records captured on a platform.
@@ -48,7 +49,15 @@ impl CrashLog {
                 };
 
                 match Region::from_slice(payload) {
-                    Ok(region) => queue.push_front(region),
+                    Ok(mut region) => {
+                        if let HeaderType::Type6 {
+                            socket_id, die_id, ..
+                        } = record.header.header_type
+                        {
+                            region.set_socket_and_die_ids(socket_id, die_id)
+                        };
+                        queue.push_front(region)
+                    }
                     Err(err) => log::error!("Invalid region in Box record: {err}"),
                 }
             }
