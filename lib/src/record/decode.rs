@@ -147,28 +147,25 @@ impl Record {
 
     /// Decodes the [Record] header into a [Node] tree.
     pub fn decode_without_cm(&self) -> Node {
-        let root_path = self.get_root_path();
-        self.decode_header(&root_path)
-    }
-
-    #[cfg(feature = "collateral_manager")]
-    fn decode_header_using_cm<T: CollateralTree>(&self, cm: &mut CollateralManager<T>) -> Node {
-        let root_path = self.get_root_path_using_cm(cm);
-        self.decode_header(&root_path)
-    }
-
-    fn decode_header(&self, root_path: &Option<String>) -> Node {
-        let mut record = Node::record(self.header.record_type().unwrap_or("record"));
-        record.add(Node::from(&self.header));
+        let header = self.decode_header();
 
         let mut root = Node::root();
-        let record_root = if let Some(custom_root) = root_path {
-            root.create_hierarchy(custom_root)
+        let record_root = if let Some(custom_root) = self.get_root_path() {
+            root.create_hierarchy(&custom_root)
         } else {
             &mut root
         };
 
-        record_root.add(record);
+        record_root.merge(header);
+        root
+    }
+
+    fn decode_header(&self) -> Node {
+        let mut record = Node::record(self.header.record_type().unwrap_or("record"));
+        record.add(Node::from(&self.header));
+
+        let mut root = Node::root();
+        root.add(record);
         root
     }
 
@@ -216,18 +213,13 @@ impl Record {
         let paths = self.header.decode_definitions_paths(cm)?;
 
         let mut root = Node::root();
-        let record_root = if let Some(custom_root) = self.get_root_path_using_cm(cm) {
-            root.create_hierarchy(&custom_root)
-        } else {
-            &mut root
-        };
 
         for mut path in paths {
             path.push(decode_def);
             let Ok(layout) = cm.get_item_with_header(&self.header, path) else {
                 continue;
             };
-            record_root.merge(self.decode_with_csv(layout, offset)?);
+            root.merge(self.decode_with_csv(layout, offset)?);
             return Ok(root);
         }
 
@@ -238,19 +230,29 @@ impl Record {
     /// collateral tree.
     #[cfg(feature = "collateral_manager")]
     pub fn decode<T: CollateralTree>(&self, cm: &mut CollateralManager<T>) -> Node {
-        let root =
+        let record =
             if let record_types::PCORE | record_types::ECORE = self.header.version.record_type {
                 self.decode_as_core_record(cm)
             } else {
                 self.decode_with_decode_def(cm, "layout.csv", 0)
             };
 
-        match root {
+        let record_node = match record {
             Ok(node) => node,
             Err(err) => {
                 log::warn!("Cannot decode record: {err}. Only the header fields will be decoded.");
-                self.decode_header_using_cm(cm)
+                self.decode_header()
             }
-        }
+        };
+
+        let mut root = Node::root();
+        let record_root = if let Some(custom_root) = self.get_root_path_using_cm(cm) {
+            root.create_hierarchy(&custom_root)
+        } else {
+            &mut root
+        };
+
+        record_root.merge(record_node);
+        root
     }
 }
