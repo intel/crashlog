@@ -12,7 +12,7 @@ use log::LevelFilter;
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(about = "Extract and decode Intel Crash Log records.")]
+#[command(version, about = "Extract and decode Intel Crash Log records.")]
 struct Cli {
     /// Path to the collateral tree. If not specified, the builtin collateral tree will be used.
     #[arg(short, long, value_name = "dir")]
