@@ -24,7 +24,7 @@ struct Cli {
     verbosity: u8,
 
     #[command(subcommand)]
-    command: Option<Command>,
+    command: Command,
 }
 
 #[derive(Subcommand)]
@@ -68,14 +68,12 @@ impl Command {
     }
 }
 
-fn run() -> Result<(), Error> {
-    let cli = Cli::parse();
-    if let Some(command) = cli.command {
-        if let Some(collateral_tree) = cli.collateral_tree {
-            command.run(CollateralManager::file_system_tree(&collateral_tree)?)?
-        } else {
-            command.run(CollateralManager::embedded_tree()?)?
-        }
+fn run(cli: Cli) -> Result<(), Error> {
+    if let Some(collateral_tree) = cli.collateral_tree {
+        cli.command
+            .run(CollateralManager::file_system_tree(&collateral_tree)?)?
+    } else {
+        cli.command.run(CollateralManager::embedded_tree()?)?
     }
     Ok(())
 }
@@ -93,7 +91,7 @@ fn main() {
 
     env_logger::Builder::from_env(Env::default().default_filter_or(log_level.to_string())).init();
 
-    if let Err(err) = run() {
+    if let Err(err) = run(cli) {
         log::error!("Fatal Error: {err}");
     }
 }
