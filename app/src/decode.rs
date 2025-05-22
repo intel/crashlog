@@ -17,8 +17,26 @@ pub fn decode<T: CollateralTree, O: std::io::Write>(
 pub fn info<T: CollateralTree>(cm: &CollateralManager<T>, input: &Path) -> Result<(), Error> {
     let crashlog = CrashLog::from_slice(&std::fs::read(input)?)?;
 
-    println!("  #   Record Type      Rev.  Product  Size   Skt  Checksum  Die      ");
-    println!("----- ---------------- ----- -------- ------ ---- --------- ---------");
+    // column widths for headers
+    let w0 = 18; // #(Region-Record)
+    let w1 = 15; // Record Type
+    let w2 = 8;  // Rev.
+    let w3 = 14; // Product
+    let w4 = 10; // Size
+    let w5 = 8;  // Skt
+    let w6 = 12; // Checksum
+    let w7 = 10; // Die
+
+    // update # to #(Region-Record)
+    let header = format!(
+        "| {:<w0$} | {:<w1$} | {:<w2$} | {:<w3$} | {:<w4$} | {:<w5$} | {:<w6$} | {:<w7$} |",
+        "#(Region-Record)", "Record Type", "Rev.", "Product", "Size", "Skt", "Checksum", "Die",
+        w0 = w0, w1 = w1, w2 = w2, w3 = w3, w4 = w4, w5 = w5, w6 = w6, w7 = w7
+    );
+    println!("{}", &header);
+    // separator line for table headers
+    println!("{}", "-".repeat(header.len()));
+
     for (i, region) in crashlog.regions.iter().enumerate() {
         for (j, record) in region.records.iter().enumerate() {
             let product = if let Ok(product) = record.header.product(cm) {
@@ -48,17 +66,18 @@ pub fn info<T: CollateralTree>(cm: &CollateralManager<T>, input: &Path) -> Resul
                     .unwrap_or_default()
             };
 
+            // populate the table
             println!(
-                "{:>2}-{:<2} {:<16} {:>5} {:<8} {:>6} {:>4} {:<9} {}",
-                i,
-                j,
+                "| {:<w0$} | {:<w1$} | {:<w2$} | {:<w3$} | {:<w4$} | {:<w5$} | {:<w6$} | {:<w7$} |",
+                format!("{}-{}", i, j),
                 record_type,
                 record.header.revision(),
                 product,
                 record.header.record_size(),
                 record.header.socket_id(),
                 checksum,
-                die
+                die,
+                w0 = w0, w1 = w1, w2 = w2, w3 = w3, w4 = w4, w5 = w5, w6 = w6, w7 = w7
             );
         }
     }
