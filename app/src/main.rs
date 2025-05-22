@@ -3,9 +3,10 @@
 
 mod decode;
 mod extract;
+mod info;
 mod unpack;
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use env_logger::Env;
 use intel_crashlog::prelude::*;
 use log::LevelFilter;
@@ -27,6 +28,12 @@ struct Cli {
     command: Command,
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, ValueEnum)]
+enum InfoFormat {
+    #[default]
+    Compact,
+}
+
 #[derive(Subcommand)]
 enum Command {
     /// Extract the Crash Log records from the platform
@@ -34,7 +41,11 @@ enum Command {
     /// Decode Crash Log records into JSON
     Decode { input_file: PathBuf },
     /// List the Crash Log records stored in the input file
-    Info { input_files: Vec<PathBuf> },
+    Info {
+        #[arg(short, long, value_enum, default_value_t = InfoFormat::default())]
+        format: InfoFormat,
+        input_files: Vec<PathBuf>,
+    },
     /// Unpack the Crash Log records stored in the input file
     Unpack { input_files: Vec<PathBuf> },
 }
@@ -46,12 +57,15 @@ impl Command {
             Command::Decode { input_file } => {
                 decode::decode(&mut cm, input_file, std::io::stdout().lock())?
             }
-            Command::Info { input_files } => {
+            Command::Info {
+                input_files,
+                format: InfoFormat::Compact,
+            } => {
                 for input_file in input_files {
                     if input_files.len() > 1 {
                         println!("\n{}:\n", input_file.display());
                     }
-                    if let Err(err) = decode::info(&cm, input_file) {
+                    if let Err(err) = info::compact(&cm, input_file) {
                         log::error!("Error: {err}")
                     }
                 }
