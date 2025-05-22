@@ -20,18 +20,32 @@ pub fn info<T: CollateralTree>(cm: &CollateralManager<T>, input: &Path) -> Resul
     // column widths for headers
     let w0 = 18; // #(Region-Record)
     let w1 = 15; // Record Type
-    let w2 = 8;  // Rev.
+    let w2 = 8; // Rev.
     let w3 = 14; // Product
     let w4 = 10; // Size
-    let w5 = 8;  // Skt
+    let w5 = 8; // Skt
     let w6 = 12; // Checksum
     let w7 = 10; // Die
 
     // update # to #(Region-Record)
     let header = format!(
         "| {:<w0$} | {:<w1$} | {:<w2$} | {:<w3$} | {:<w4$} | {:<w5$} | {:<w6$} | {:<w7$} |",
-        "#(Region-Record)", "Record Type", "Rev.", "Product", "Size", "Skt", "Checksum", "Die",
-        w0 = w0, w1 = w1, w2 = w2, w3 = w3, w4 = w4, w5 = w5, w6 = w6, w7 = w7
+        "#(Region-Record)",
+        "Record Type",
+        "Rev.",
+        "Product",
+        "Size",
+        "Skt",
+        "Checksum",
+        "Die",
+        w0 = w0,
+        w1 = w1,
+        w2 = w2,
+        w3 = w3,
+        w4 = w4,
+        w5 = w5,
+        w6 = w6,
+        w7 = w7
     );
     println!("{}", &header);
     // separator line for table headers
@@ -77,7 +91,14 @@ pub fn info<T: CollateralTree>(cm: &CollateralManager<T>, input: &Path) -> Resul
                 record.header.socket_id(),
                 checksum,
                 die,
-                w0 = w0, w1 = w1, w2 = w2, w3 = w3, w4 = w4, w5 = w5, w6 = w6, w7 = w7
+                w0 = w0,
+                w1 = w1,
+                w2 = w2,
+                w3 = w3,
+                w4 = w4,
+                w5 = w5,
+                w6 = w6,
+                w7 = w7
             );
         }
     }
