@@ -243,7 +243,7 @@ impl Node {
     /// assert_eq!(children.next(), Some(&Node::section("foo")));
     /// assert_eq!(children.next(), None);
     /// ```
-    pub fn children(&self) -> NodeChildren {
+    pub fn children(&self) -> NodeChildren<'_> {
         NodeChildren {
             iter: self.children.values(),
         }
