@@ -58,7 +58,7 @@ impl CrashLog {
                         };
                         queue.push_front(region)
                     }
-                    Err(err) => log::error!("Invalid region in Box record: {err}"),
+                    Err(err) => log::warn!("Invalid region in Box record: {err}"),
                 }
             }
 
