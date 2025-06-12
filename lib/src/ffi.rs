@@ -169,15 +169,28 @@ pub extern "C" fn crashlog_read_from_windows_event_logs(
         .unwrap_or(ptr::null_mut())
 }
 
-/// Reads the Crash Log reported through ACPI from the linux sysfs.
+/// Reads the Crash Log reported through ACPI from the linux sysfs
 ///
 /// # Errors
 ///
-/// Returns a `NULL` pointer if the Crash Log records cannot be found.
+/// Returns a `NULL` pointer if the Crash Log record cannot be found.
 #[cfg(any(all(target_os = "linux", feature = "extraction"), doc))]
 #[unsafe(no_mangle)]
-pub extern "C" fn crashlog_read_from_linux_sysfs(context: *mut CrashLogContext) -> *mut CrashLog {
-    CrashLog::from_linux_sysfs()
+pub extern "C" fn crashlog_read_from_acpi_sysfs(context: *mut CrashLogContext) -> *mut CrashLog {
+    CrashLog::from_acpi_sysfs()
+        .map(alloc)
+        .unwrap_or(ptr::null_mut())
+}
+
+/// Reads the Crash Log reported through Intel PMT from the linux sysfs
+///
+/// # Errors
+///
+/// Returns a `NULL` pointer if the Crash Log record cannot be found.
+#[cfg(any(all(target_os = "linux", feature = "extraction"), doc))]
+#[unsafe(no_mangle)]
+pub extern "C" fn crashlog_read_from_pmt_sysfs(context: *mut CrashLogContext) -> *mut CrashLog {
+    CrashLog::from_pmt_sysfs()
         .map(alloc)
         .unwrap_or(ptr::null_mut())
 }

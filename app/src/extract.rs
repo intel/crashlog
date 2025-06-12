@@ -15,7 +15,16 @@ pub fn extract(output_path: Option<&Path>) {
     }
     #[cfg(target_os = "linux")]
     {
-        result = CrashLog::from_linux_sysfs().map(|crashlog| Vec::from([crashlog]));
+        let crashlogs: Vec<CrashLog> = [CrashLog::from_acpi_sysfs(), CrashLog::from_pmt_sysfs()]
+            .into_iter()
+            .filter_map(|crashlog| crashlog.ok())
+            .collect();
+
+        result = if crashlogs.is_empty() {
+            Err(Error::NoCrashLogFound)
+        } else {
+            Ok(crashlogs)
+        };
     }
 
     match result {
