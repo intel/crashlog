@@ -15,7 +15,7 @@ pub fn extract(output_path: Option<&Path>) {
     }
     #[cfg(target_os = "linux")]
     {
-        result = CrashLog::from_linux_sysfs().map(|crashlog| Vec::from([crashlog]));
+        result = CrashLog::from_linux_sysfs();
     }
 
     match result {
