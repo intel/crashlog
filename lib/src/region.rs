@@ -94,6 +94,10 @@ impl Region {
             cursor += record_size;
         }
 
+        if region.records.is_empty() {
+            return Err(Error::EmptyRegion);
+        }
+
         Ok(region)
     }
 

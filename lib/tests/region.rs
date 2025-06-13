@@ -15,3 +15,9 @@ fn from_slice() {
 
     assert!(region.is_ok());
 }
+
+#[test]
+fn empty() {
+    let region = Region::from_slice(&[]);
+    assert!(region.is_err());
+}

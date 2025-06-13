@@ -25,6 +25,7 @@ pub enum Error {
     MissingDecodeDefinitions(Version),
     InvalidBootErrorRecordRegion,
     InvalidHeader,
+    EmptyRegion,
     InvalidHeaderType(u16),
     InvalidRecordType(u8),
     InvalidProductID(u32),
@@ -57,6 +58,7 @@ impl fmt::Display for Error {
             }
             Error::InvalidBootErrorRecordRegion => write!(f, "Invalid Boot Error Record region"),
             Error::InvalidHeader => write!(f, "Invalid Crash Log Header"),
+            Error::EmptyRegion => write!(f, "The Crash Log Region is not populated"),
             Error::InvalidHeaderType(ht) => write!(f, "Invalid Crash Log Header Type: {ht}"),
             Error::InvalidRecordType(rt) => write!(f, "Unknown Crash Log Record Type: {rt:#x}"),
             Error::InvalidProductID(pid) => write!(f, "Unknown Crash Log Product ID: {pid:#x}"),
