@@ -58,6 +58,27 @@
     - Windows: `target/release/intel_crashlog.dll`
     - Linux: `target/release/libintel_crashlog.so`
 
+### Product Support
+
+The product-specific support is provided by the collateral tree.
+The files included in the collateral tree can be embedded in the crate/library
+when the `embedded_collateral_tree` feature is enabled.
+
+This can be configure at build-time using the following environment variables:
+
+- `CRASHLOG_COLLATERAL_TREE`: Path to the collateral tree in the file system.
+  If not set, the build script will embed the files located in the
+  [collateral](collateral) folder.
+- `CRASHLOG_PRODUCTS`: Comma-separated list of products (Three-Letter Acronyms)
+  to include in the embedded tree. If not set or empty, all the available
+  product supports found in the collateral tree are included.
+
+Example:
+
+```
+$ CRASHLOG_COLLATERAL_TREE=./collateral CRASHLOG_PRODUCTS=LNL,LNC,SKT cargo build
+```
+
 ### Building Documentation
 
 Generate the HTML documentation with:
