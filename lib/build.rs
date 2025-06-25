@@ -8,15 +8,19 @@ use std::env;
 
 #[cfg(feature = "embedded_collateral_tree")]
 use std::{
+    collections::BTreeSet,
     fs::File,
     io::Write,
     path::{Path, PathBuf},
 };
 
+const COLLATERAL_PATH_VAR: &str = "CRASHLOG_COLLATERAL_TREE";
+const PRODUCTS_VAR: &str = "CRASHLOG_PRODUCTS";
+
 #[cfg(feature = "ffi")]
 fn generate_headers() {
     let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    println!("cargo:rerun-if-changed=src/ffi.rs");
+    cargo_emit::rerun_if_changed!("src/ffi.rs");
 
     for (language, header) in [
         (cbindgen::Language::C, "target/include/intel_crashlog.h"),
@@ -51,10 +55,22 @@ fn generate_headers() {
 
 #[cfg(feature = "embedded_collateral_tree")]
 fn embed_collateral_tree() {
+    cargo_emit::rerun_if_env_changed!(COLLATERAL_PATH_VAR);
+    cargo_emit::rerun_if_env_changed!(PRODUCTS_VAR);
+
     let collateral_tree =
-        env::var("CRASHLOG_COLLATERAL_TREE").unwrap_or_else(|_| "collateral".to_string());
+        env::var(COLLATERAL_PATH_VAR).unwrap_or_else(|_| "collateral".to_string());
+
     cargo_emit::rerun_if_changed!(collateral_tree);
-    cargo_emit::warning!("Embedding collateral tree: {}", collateral_tree);
+
+    let requested_products: BTreeSet<String> = env::var(PRODUCTS_VAR)
+        .unwrap_or_else(|_| String::new())
+        .split(",")
+        .filter(|s| !s.is_empty())
+        .map(|s| s.trim().to_owned())
+        .collect();
+
+    let mut included_products = BTreeSet::new();
 
     let out_dir = env::var_os("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("embedded_collateral_tree.rs");
@@ -63,6 +79,15 @@ fn embed_collateral_tree() {
     let tree_path = std::path::absolute(Path::new(&collateral_tree)).unwrap();
     file.write_all("{\n".as_ref()).unwrap();
     for (product, variant, stepping, security, fullpath) in visit_collateral_tree(&tree_path) {
+        // Check if product must be included in the collateral tree
+        if !requested_products.is_empty() && !requested_products.contains(&product) {
+            continue;
+        }
+
+        if product != "all" {
+            included_products.insert(product.clone());
+        }
+
         let path = fullpath
             .strip_prefix(
                 tree_path
@@ -94,6 +119,23 @@ fn embed_collateral_tree() {
         .unwrap();
     }
     file.write_all("}\n".as_ref()).unwrap();
+
+    for requested_product in requested_products {
+        if !included_products.contains(&requested_product) {
+            cargo_emit::warning!("Requested unknown Crash Log product: {}", requested_product);
+        }
+    }
+
+    if !included_products.is_empty() {
+        cargo_emit::warning!(
+            "Embedding Crash Log support for the following product(s): {}",
+            included_products
+                .iter()
+                .map(|s| s.as_str())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+    }
 }
 
 #[cfg(feature = "embedded_collateral_tree")]
