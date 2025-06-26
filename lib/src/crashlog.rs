@@ -6,19 +6,13 @@ use crate::bert::{Berr, Bert};
 #[cfg(feature = "collateral_manager")]
 use crate::collateral::{CollateralManager, CollateralTree};
 use crate::cper::Cper;
-#[cfg(feature = "extraction")]
-use crate::extract;
 use crate::metadata::Metadata;
 use crate::node::Node;
 use crate::region::Region;
 #[cfg(not(feature = "std"))]
 use alloc::{collections::VecDeque, vec, vec::Vec};
-#[cfg(target_os = "uefi")]
-use core::ptr::NonNull;
 #[cfg(feature = "std")]
 use std::collections::VecDeque;
-#[cfg(target_os = "uefi")]
-use uefi_raw::table::system::SystemTable;
 
 use crate::header::HeaderType;
 use crate::header::record_types;
@@ -33,7 +27,7 @@ pub struct CrashLog {
 }
 
 impl CrashLog {
-    fn from_regions(regions: Vec<Region>) -> Result<Self, Error> {
+    pub(crate) fn from_regions(regions: Vec<Region>) -> Result<Self, Error> {
         let mut queue = VecDeque::from(regions);
         let mut regions = Vec::new();
 
@@ -85,25 +79,28 @@ impl CrashLog {
         CrashLog::from_regions(regions)
     }
 
-    #[cfg(all(target_os = "uefi", feature = "extraction"))]
-    /// Reads the Crash Log records from the EFI System Table.
-    pub fn from_system_table(system_table: Option<NonNull<SystemTable>>) -> Result<Self, Error> {
-        extract::efi::get_crashlog_from_system_table(system_table)
-    }
-
     #[cfg(any(all(target_os = "windows", feature = "extraction"), doc))]
     /// Searches for any Intel Crash Log logged in the Windows event log
     pub fn from_windows_event_logs(path: Option<&std::path::Path>) -> Result<Vec<Self>, Error> {
-        extract::event_log::get_crashlogs_from_event_logs(path).map_err(|err| {
+        Self::from_event_logs(path).map_err(|err| {
             log::error!("Error while accessing windows event logs: {err}");
             Error::InternalError
         })
     }
 
     #[cfg(any(all(target_os = "linux", feature = "extraction"), doc))]
-    /// Reads the Crash Log reported through ACPI from the linux sysfs
-    pub fn from_linux_sysfs() -> Result<Self, Error> {
-        extract::sysfs::read_berr_from_sysfs().and_then(CrashLog::from_berr)
+    /// Reads the Crash Log reported through ACPI or Intel PMT from the linux sysfs
+    pub fn from_linux_sysfs() -> Result<Vec<Self>, Error> {
+        let crashlogs: Vec<Self> = [Self::from_acpi_sysfs(), Self::from_pmt_sysfs()]
+            .into_iter()
+            .filter_map(|crashlog| crashlog.ok())
+            .collect();
+
+        if crashlogs.is_empty() {
+            return Err(Error::NoCrashLogFound);
+        }
+
+        Ok(crashlogs)
     }
 
     /// Extracts the Crash Log records from [Cper] record.

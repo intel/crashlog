@@ -209,37 +209,39 @@ fn query_crashlogs(path: PCWSTR, query: PCWSTR, query_flags: u32) -> Result<Vec<
     Ok(crashlogs)
 }
 
-pub(crate) fn get_crashlogs_from_event_logs(path: Option<&Path>) -> Result<Vec<CrashLog>> {
-    let evtx_path_hstring = path.map(HSTRING::from);
-    let evtx_path = evtx_path_hstring
-        .as_ref()
-        .map(|hstring| PCWSTR(hstring.as_ptr()));
-    let query_flags = if path.is_some() {
-        EvtQueryFilePath.0
-    } else {
-        EvtQueryChannelPath.0
-    };
+impl CrashLog {
+    pub(crate) fn from_event_logs(path: Option<&Path>) -> Result<Vec<Self>> {
+        let evtx_path_hstring = path.map(HSTRING::from);
+        let evtx_path = evtx_path_hstring
+            .as_ref()
+            .map(|hstring| PCWSTR(hstring.as_ptr()));
+        let query_flags = if path.is_some() {
+            EvtQueryFilePath.0
+        } else {
+            EvtQueryChannelPath.0
+        };
 
-    let mut crashlogs = query_crashlogs(
-        evtx_path.unwrap_or(w!("Microsoft-Windows-Kernel-WHEA/Errors")),
-        w!("*[System[Provider[@Name=\"Microsoft-Windows-Kernel-WHEA\"]]]"),
-        query_flags,
-    )?;
-    log::info!(
-        "Extracted {} Crash Logs from Application Event Logs",
-        crashlogs.len()
-    );
+        let mut crashlogs = query_crashlogs(
+            evtx_path.unwrap_or(w!("Microsoft-Windows-Kernel-WHEA/Errors")),
+            w!("*[System[Provider[@Name=\"Microsoft-Windows-Kernel-WHEA\"]]]"),
+            query_flags,
+        )?;
+        log::info!(
+            "Extracted {} Crash Logs from Application Event Logs",
+            crashlogs.len()
+        );
 
-    let mut system_crashlogs = query_crashlogs(
-        evtx_path.unwrap_or(w!("System")),
-        w!("*[System[Provider[@Name=\"Microsoft-Windows-WHEA-Logger\"]]]"),
-        query_flags,
-    )?;
-    log::info!(
-        "Extracted {} Crash Logs from Windows Event Logs",
-        system_crashlogs.len()
-    );
+        let mut system_crashlogs = query_crashlogs(
+            evtx_path.unwrap_or(w!("System")),
+            w!("*[System[Provider[@Name=\"Microsoft-Windows-WHEA-Logger\"]]]"),
+            query_flags,
+        )?;
+        log::info!(
+            "Extracted {} Crash Logs from Windows Event Logs",
+            system_crashlogs.len()
+        );
 
-    crashlogs.append(&mut system_crashlogs);
-    Ok(crashlogs)
+        crashlogs.append(&mut system_crashlogs);
+        Ok(crashlogs)
+    }
 }

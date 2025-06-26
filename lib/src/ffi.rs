@@ -169,16 +169,20 @@ pub extern "C" fn crashlog_read_from_windows_event_logs(
         .unwrap_or(ptr::null_mut())
 }
 
-/// Reads the Crash Log reported through ACPI from the linux sysfs.
+/// Reads the Crash Log reported through ACPI or Intel PMT from the linux sysfs.
 ///
 /// # Errors
 ///
 /// Returns a `NULL` pointer if the Crash Log records cannot be found.
 #[cfg(any(all(target_os = "linux", feature = "extraction"), doc))]
 #[unsafe(no_mangle)]
-pub extern "C" fn crashlog_read_from_linux_sysfs(context: *mut CrashLogContext) -> *mut CrashLog {
+pub extern "C" fn crashlog_read_from_linux_sysfs(context: *mut CrashLogContext) -> *mut CrashLogs {
     CrashLog::from_linux_sysfs()
-        .map(alloc)
+        .map(|crashlogs| {
+            alloc(CrashLogs {
+                crashlogs: VecDeque::from(crashlogs),
+            })
+        })
         .unwrap_or(ptr::null_mut())
 }
 

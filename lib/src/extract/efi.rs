@@ -73,32 +73,33 @@ pub fn find_bert() -> Result<Bert, Error> {
         })
 }
 
-pub(crate) fn get_crashlog_from_system_table(
-    system_table: Option<NonNull<SystemTable>>,
-) -> Result<CrashLog, Error> {
-    if let Some(system_table) = system_table {
-        unsafe { uefi::table::set_system_table(system_table.as_ptr()) }
-    }
+impl CrashLog {
+    /// Reads the Crash Log records from the EFI System Table.
+    pub fn from_system_table(system_table: Option<NonNull<SystemTable>>) -> Result<Self, Error> {
+        if let Some(system_table) = system_table {
+            unsafe { uefi::table::set_system_table(system_table.as_ptr()) }
+        }
 
-    let mut crashlog = find_bert()
-        .and_then(|bert| {
-            unsafe { bert.berr_from_phys_mem() }.ok_or(Error::InvalidBootErrorRecordRegion)
-        })
-        .and_then(CrashLog::from_berr)?;
-
-    crashlog.metadata = metadata::Metadata {
-        computer: Some("efi".to_string()),
-        time: uefi::runtime::get_time()
-            .map(|time| metadata::Time {
-                year: time.year(),
-                month: time.month(),
-                day: time.day(),
-                hour: time.hour(),
-                minute: time.minute(),
+        let mut crashlog = find_bert()
+            .and_then(|bert| {
+                unsafe { bert.berr_from_phys_mem() }.ok_or(Error::InvalidBootErrorRecordRegion)
             })
-            .inspect_err(|err| log::warn!("Cannot get time: {err}"))
-            .ok(),
-    };
+            .and_then(CrashLog::from_berr)?;
 
-    Ok(crashlog)
+        crashlog.metadata = metadata::Metadata {
+            computer: Some("efi".to_string()),
+            time: uefi::runtime::get_time()
+                .map(|time| metadata::Time {
+                    year: time.year(),
+                    month: time.month(),
+                    day: time.day(),
+                    hour: time.hour(),
+                    minute: time.minute(),
+                })
+                .inspect_err(|err| log::warn!("Cannot get time: {err}"))
+                .ok(),
+        };
+
+        Ok(crashlog)
+    }
 }
