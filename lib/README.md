@@ -63,7 +63,7 @@
 Generate the HTML documentation with:
 
 ```
-$ cargo doc
+$ cargo doc --all-features
 ```
 
 The documentation will be available under the `target/doc/intel_crashlog/`
