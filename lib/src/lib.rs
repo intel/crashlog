@@ -114,6 +114,7 @@ mod bert;
 pub mod collateral;
 mod cper;
 mod crashlog;
+pub mod errata;
 mod error;
 #[cfg(feature = "extraction")]
 mod extract;
