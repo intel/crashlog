@@ -238,3 +238,19 @@ fn box_header_type6() {
 
     assert_eq!(header_type.kind, NodeType::Field { value: 3 })
 }
+
+#[test]
+fn header_type0_legacy_server() {
+    let mut cm = CollateralManager::file_system_tree(Path::new(COLLATERAL_TREE_PATH)).unwrap();
+    let data = fs::read("tests/samples/legacy_type0.crashlog").unwrap();
+
+    let crashlog = CrashLog::from_slice(&data).unwrap();
+
+    let root = crashlog.decode(&mut cm);
+
+    let header_type = root
+        .get_by_path("processors.cpu1.die10.mca.hdr.version.header_type")
+        .unwrap();
+
+    assert_eq!(header_type.kind, NodeType::Field { value: 0 })
+}

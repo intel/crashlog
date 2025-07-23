@@ -5,6 +5,7 @@
 
 #[cfg(feature = "collateral_manager")]
 use crate::collateral::{CollateralManager, CollateralTree, ItemPath, PVSS};
+use crate::errata::Errata;
 use crate::error::Error;
 use crate::node::Node;
 #[cfg(not(feature = "std"))]
@@ -76,6 +77,16 @@ pub enum HeaderType {
         socket_id: u8,
         completion_status_size: u16,
         completion_status: Vec<u32>,
+        collection_complete: bool,
+    },
+
+    Type0LegacyServer {
+        timestamp: u64,
+        agent_version: u32,
+        reason: u32,
+        die_id: u8,
+        socket_id: u8,
+        completion_status: u32,
         collection_complete: bool,
     },
 }
@@ -177,6 +188,36 @@ impl HeaderType {
         })
     }
 
+    fn type0_legacy_server_from_slice(slice: &[u8]) -> Option<Self> {
+        let reason = u32::from_le_bytes(slice.get(4..8)?.try_into().ok()?);
+        let timestamp = u64::from_le_bytes(slice.get(8..16)?.try_into().ok()?);
+        let agent_version = u32::from_le_bytes(slice.get(20..24)?.try_into().ok()?);
+        let socket_id = slice[24];
+        let cs_data = u32::from_le_bytes(slice.get(28..32)?.try_into().ok()?);
+        let completion_status = cs_data & 0x7FFFFFFF;
+        let collection_complete = (cs_data >> 31) != 0;
+
+        // Encoded die_id
+        let revision = slice[0];
+        let die_idx = revision & 0x3;
+
+        let die_id = if ((revision >> 7) & 1) == 1 {
+            die_idx + 9
+        } else {
+            die_idx << 2
+        };
+
+        Some(HeaderType::Type0LegacyServer {
+            timestamp,
+            agent_version,
+            reason,
+            die_id,
+            socket_id,
+            completion_status,
+            collection_complete,
+        })
+    }
+
     pub fn from_slice(header_type_value: u16, slice: &[u8]) -> Result<Self, Error> {
         match header_type_value {
             0 => Ok(HeaderType::Type0),
@@ -188,6 +229,10 @@ impl HeaderType {
             6 => Self::type6_from_slice(slice).ok_or(Error::InvalidHeader),
             type_value => Err(Error::InvalidHeaderType(type_value)),
         }
+    }
+
+    pub fn from_slice_type0_legacy_server(slice: &[u8]) -> Result<Self, Error> {
+        Self::type0_legacy_server_from_slice(slice).ok_or(Error::InvalidHeader)
     }
 }
 
@@ -209,8 +254,19 @@ impl Header {
             // Termination marker
             return Ok(None);
         };
-        let size = RecordSize::from_slice(slice).ok_or(Error::InvalidHeader)?;
-        let header_type = HeaderType::from_slice(version.header_type, slice)?;
+        let errata = Errata::from_version(&version);
+
+        let size = if errata.type0_legacy_server {
+            RecordSize::from_slice_type0_legacy_server(slice).ok_or(Error::InvalidHeader)?
+        } else {
+            RecordSize::from_slice(slice).ok_or(Error::InvalidHeader)?
+        };
+
+        let header_type = if errata.type0_legacy_server {
+            HeaderType::from_slice_type0_legacy_server(slice)?
+        } else {
+            HeaderType::from_slice(version.header_type, slice)?
+        };
 
         Ok(Some(Header {
             version,
@@ -280,19 +336,19 @@ impl Header {
 
     /// Returns the ID of the socket that generated the record.
     pub fn socket_id(&self) -> u8 {
-        if let HeaderType::Type6 { socket_id, .. } = self.header_type {
-            socket_id
-        } else {
-            0
+        match self.header_type {
+            HeaderType::Type6 { socket_id, .. } => socket_id,
+            HeaderType::Type0LegacyServer { socket_id, .. } => socket_id,
+            _ => 0,
         }
     }
 
     /// Returns the ID of the die that generated the record.
     pub fn die_id(&self) -> Option<u8> {
-        if let HeaderType::Type6 { die_id, .. } = self.header_type {
-            Some(die_id)
-        } else {
-            None
+        match self.header_type {
+            HeaderType::Type6 { die_id, .. } => Some(die_id),
+            HeaderType::Type0LegacyServer { die_id, .. } => Some(die_id),
+            _ => None,
         }
     }
 
@@ -372,6 +428,7 @@ impl Header {
                 completion_status_size,
                 ..
             } => 28 + completion_status_size as usize * 4,
+            HeaderType::Type0LegacyServer { .. } => 32,
         }
     }
 
@@ -380,25 +437,28 @@ impl Header {
         &self,
         cm: &CollateralManager<T>,
     ) -> Option<String> {
-        if let HeaderType::Type6 { socket_id, .. } = self.header_type {
-            if let Some(die) = self.die(cm) {
-                Some(format!("processors.cpu{socket_id}.{die}"))
-            } else {
-                self.get_root_path()
+        match self.header_type {
+            HeaderType::Type6 { socket_id, .. }
+            | HeaderType::Type0LegacyServer { socket_id, .. } => {
+                if let Some(die) = self.die(cm) {
+                    Some(format!("processors.cpu{socket_id}.{die}"))
+                } else {
+                    self.get_root_path()
+                }
             }
-        } else {
-            None
+            _ => None,
         }
     }
 
     pub(super) fn get_root_path(&self) -> Option<String> {
-        if let HeaderType::Type6 {
-            socket_id, die_id, ..
-        } = self.header_type
-        {
-            Some(format!("processors.cpu{socket_id}.die{die_id}"))
-        } else {
-            None
+        match self.header_type {
+            HeaderType::Type6 {
+                socket_id, die_id, ..
+            }
+            | HeaderType::Type0LegacyServer {
+                socket_id, die_id, ..
+            } => Some(format!("processors.cpu{socket_id}.die{die_id}")),
+            _ => None,
         }
     }
 }
@@ -412,8 +472,13 @@ impl fmt::Display for Header {
         );
         let header_type = match self.header_type {
             HeaderType::Type6 {
-                die_id, socket_id, ..
-            } => format!("die_id={die_id}, socket_id={socket_id}"),
+                socket_id, die_id, ..
+            }
+            | HeaderType::Type0LegacyServer {
+                socket_id, die_id, ..
+            } => {
+                format!("die_id={die_id}, socket_id={socket_id}")
+            }
             _ => "..".to_string(),
         };
 
@@ -510,6 +575,14 @@ impl RecordSize {
         Some(RecordSize {
             record_size: u16::from_le_bytes(slice.get(4..6)?.try_into().ok()?),
             extended_record_size: u16::from_le_bytes(slice.get(6..8)?.try_into().ok()?),
+        })
+    }
+
+    /// Creates a [RecordSize] from the raw record of a server product with legacy header type0
+    pub fn from_slice_type0_legacy_server(slice: &[u8]) -> Option<Self> {
+        Some(RecordSize {
+            record_size: u16::from_le_bytes(slice.get(16..18)?.try_into().ok()?),
+            extended_record_size: 0,
         })
     }
 }
@@ -640,6 +713,26 @@ impl From<&Header> for Node {
                         *completion_status as u64,
                     ));
                 }
+            }
+            HeaderType::Type0LegacyServer {
+                timestamp,
+                agent_version,
+                reason,
+                die_id,
+                socket_id,
+                completion_status,
+                collection_complete,
+            } => {
+                node.add(Node::field("timestamp", timestamp));
+                node.add(Node::field("agent_version", agent_version as u64));
+                node.add(Node::field("reason", reason as u64));
+                node.add(Node::field("die_id", die_id as u64));
+                node.add(Node::field("socket_id", socket_id as u64));
+                node.add(Node::field("completion_status", completion_status as u64));
+                node.add(Node::field(
+                    "record_collection_completed",
+                    collection_complete as u64,
+                ));
             }
             _ => (),
         }

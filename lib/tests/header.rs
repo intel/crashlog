@@ -71,3 +71,15 @@ fn decode_die_id_header() {
     let die = header.die(&cm).unwrap();
     assert_eq!(die, "io1");
 }
+
+#[test]
+fn decode_legacy_header_type0() {
+    let data = fs::read("tests/samples/legacy_type0.crashlog").unwrap();
+    let header = Header::from_slice(&data).unwrap().unwrap();
+
+    let socket_id = header.socket_id();
+    assert_eq!(socket_id, 1);
+
+    let die_id = header.die_id().unwrap();
+    assert_eq!(die_id, 10);
+}
