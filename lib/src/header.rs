@@ -278,11 +278,10 @@ impl Header {
     /// Returns the granularity of the record size fields in bytes
     #[inline]
     fn record_size_granularity(&self) -> usize {
-        match (self.version.record_type, self.version.product_id) {
-            (record_types::ECORE, _) => 1,
-            (record_types::PCORE, product_id) if product_id < 0x71 => 1,
-            _ => 4,
+        if self.version.into_errata().core_record_size_bytes {
+            return 1;
         }
+        4
     }
 
     /// Returns the size of the record in bytes.
@@ -550,6 +549,20 @@ impl Version {
             record_types::MCA => "MCA",
             rt => return Err(Error::InvalidRecordType(rt)),
         })
+    }
+
+    pub fn into_errata(&self) -> Errata {
+        let type0_legacy_server = self.header_type == 0 && self.product_id == 0x2f;
+        let type0_legacy_server_box = type0_legacy_server && self.record_type == 0x4;
+        let core_record_size_bytes = !type0_legacy_server
+            && ((self.record_type == record_types::ECORE && self.product_id < 0x96)
+                || (self.record_type == record_types::PCORE && self.product_id < 0x71));
+
+        Errata {
+            type0_legacy_server,
+            type0_legacy_server_box,
+            core_record_size_bytes,
+        }
     }
 }
 
