@@ -33,7 +33,11 @@ impl CrashLog {
 
         while let Some(region) = queue.pop_front() {
             for record in region.records.iter() {
-                if record.header.version.record_type != record_types::BOX {
+                let errata = record.header.version.into_errata();
+                let is_box = record.header.version.record_type == record_types::BOX
+                    || errata.type0_legacy_server_box;
+
+                if !is_box {
                     continue;
                 }
 
@@ -45,6 +49,9 @@ impl CrashLog {
                 match Region::from_slice(payload) {
                     Ok(mut region) => {
                         if let HeaderType::Type6 {
+                            socket_id, die_id, ..
+                        }
+                        | HeaderType::Type0LegacyServer {
                             socket_id, die_id, ..
                         } = record.header.header_type
                         {
