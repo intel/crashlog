@@ -230,12 +230,15 @@ impl Record {
     /// collateral tree.
     #[cfg(feature = "collateral_manager")]
     pub fn decode<T: CollateralTree>(&self, cm: &mut CollateralManager<T>) -> Node {
-        let record =
-            if let record_types::PCORE | record_types::ECORE = self.header.version.record_type {
-                self.decode_as_core_record(cm)
-            } else {
-                self.decode_with_decode_def(cm, "layout.csv", 0)
-            };
+        let is_core = ((self.header.version.record_type == record_types::PCORE)
+            || (self.header.version.record_type == record_types::ECORE))
+            && !self.header.version.into_errata().type0_legacy_server_box;
+
+        let record = if is_core {
+            self.decode_as_core_record(cm)
+        } else {
+            self.decode_with_decode_def(cm, "layout.csv", 0)
+        };
 
         let record_node = match record {
             Ok(node) => node,
