@@ -86,4 +86,10 @@ fn legacy_type0_box() {
         .unwrap();
 
     assert_eq!(product_id.kind, NodeType::Field { value: 0x79 });
+
+    let box_revision = root
+        .get_by_path("processors.cpu1.die10.pcore.hdr.version.revision")
+        .unwrap();
+
+    assert_eq!(box_revision.kind, NodeType::Field { value: 0x81 });
 }
