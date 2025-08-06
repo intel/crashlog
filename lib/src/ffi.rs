@@ -56,7 +56,7 @@ pub struct CrashLogs {
 
 /// Opaque type that stores a representation of a Crash Log.
 ///
-/// This structure is created by the [`crashlog_export_to_json`] and [`crashlog_export_to_binary`]
+/// This structure is created by the [`crashlog_export_to_json`] and [`crashlog_export_to_cper`]
 /// functions and must be released using the [`crashlog_release_export`] function.
 ///
 /// The actual content of the structure can be accessed from this structure using the
@@ -108,7 +108,7 @@ pub extern "C" fn crashlog_init() -> *mut CrashLogContext {
 /// Creates a [`CrashLog`] object from a binary blob.
 ///
 /// The binary blob pointed by the `data` argument can be a raw Crash Log region, a BERT
-/// dump, or a CPER dump.
+/// dump, or a CPER record.
 ///
 /// The memory allocated by this function can be freed using the [`crashlog_release`] function.
 ///
@@ -269,7 +269,7 @@ pub unsafe extern "C" fn crashlog_decode(
     }
 }
 
-/// Exports the Crash Log as binary blob.
+/// Exports the Crash Log as a CPER record.
 ///
 /// The memory allocated by this function can be freed using the [`crashlog_release_export`]
 /// function.
@@ -282,7 +282,7 @@ pub unsafe extern "C" fn crashlog_decode(
 /// The `crashlog` pointer must be valid and obtained using one of the `crashlog_read_*()`
 /// functions.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn crashlog_export_to_binary(
+pub unsafe extern "C" fn crashlog_export_to_cper(
     context: *mut CrashLogContext,
     crashlog: *const CrashLog,
 ) -> *mut CrashLogExport {
@@ -348,7 +348,7 @@ pub unsafe extern "C" fn crashlog_export_to_json(
 /// calling the [`crashlog_init`] function.
 ///
 /// The `export` pointer must be obtained using the [`crashlog_export_to_json`] function or the
-/// [`crashlog_export_to_binary`] function.
+/// [`crashlog_export_to_cper`] function.
 ///
 /// The `buffer` pointer must point to a valid writable memory region of `buffer_size` bytes.
 /// The data written to this buffer is not nul-terminated.

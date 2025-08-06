@@ -98,7 +98,7 @@ fn ffi_export() {
     unsafe {
         let ctx = crashlog_init();
         let crashlog = crashlog_read_from_buffer(ctx, blob.as_ptr(), blob.len());
-        let export = crashlog_export_to_binary(ctx, crashlog);
+        let export = crashlog_export_to_cper(ctx, crashlog);
         let mut data: Vec<u8> = Vec::new();
 
         let mut buffer = [0u8; 32];

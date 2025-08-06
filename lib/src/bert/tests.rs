@@ -24,7 +24,7 @@ fn crashlog_bert() {
 
     assert_eq!(crashlog.regions.len(), 2);
 
-    let bytes = crashlog.to_bytes();
+    let bytes = crashlog.to_bert();
     let berr = Berr::from_bert_file(&bytes);
     assert!(berr.is_some());
     let berr = berr.unwrap();
