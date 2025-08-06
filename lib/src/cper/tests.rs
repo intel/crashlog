@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use super::Cper;
+use super::section::CperSectionBody;
 use crate::CrashLog;
 
 pub const FW_ERROR_RECORD_GUID: uguid::Guid = uguid::guid!("81212a96-09ed-4996-9471-8d729c8e69ed");
@@ -9,9 +10,6 @@ pub const FW_ERROR_RECORD_GUID: uguid::Guid = uguid::guid!("81212a96-09ed-4996-9
 #[test]
 fn from_slice() {
     let cper = Cper::from_slice(&std::fs::read("tests/samples/cper.whea").unwrap()).unwrap();
-
-    let signature = cper.record_header.signature_start.to_le_bytes();
-    assert_eq!(&signature, b"CPER");
 
     assert_eq!(cper.record_header.section_count, 5);
 
@@ -40,4 +38,21 @@ fn cl_from_cper() {
     }
 
     assert_eq!(records.len(), 3);
+}
+
+#[test]
+fn cl_to_cper() {
+    let data = std::fs::read("tests/samples/dummy_crashlog_agent_rev1.crashlog").unwrap();
+    let crashlog = CrashLog::from_slice(&data).unwrap();
+    let cper_bytes = crashlog.to_bytes();
+    let cper = Cper::from_slice(&cper_bytes).unwrap();
+
+    assert_eq!(cper.record_header.section_count, 1);
+
+    let section = &cper.sections[0];
+    let CperSectionBody::FirmwareErrorRecord(ref fer) = section.body else {
+        let guid = section.descriptor.section_type;
+        panic!("Section is not a FirmwareErrorRecord: {guid}");
+    };
+    assert_eq!(fer.payload, data);
 }

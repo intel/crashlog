@@ -3,8 +3,8 @@
 
 use super::Bert;
 use crate::CrashLog;
-use crate::cper::fer::{FirmwareErrorRecord, FirmwareErrorRecordHeader, RECORD_ID_CRASHLOG};
-use crate::cper::{CperSection, FW_ERROR_RECORD_GUID};
+use crate::cper::section::fer::FirmwareErrorRecord;
+use crate::cper::section::{CperSectionBody, guids};
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 #[cfg(not(feature = "std"))]
@@ -115,13 +115,13 @@ impl GenericErrorDataEntryHeader {
 
 pub struct GenericErrorDataEntry {
     pub header: GenericErrorDataEntryHeader,
-    pub cper_section: CperSection,
+    pub cper_section: CperSectionBody,
 }
 
 impl GenericErrorDataEntry {
     fn from_slice(s: &[u8]) -> Option<Self> {
         let header = GenericErrorDataEntryHeader::from_slice(s)?;
-        let cper_section = CperSection::from_slice(
+        let cper_section = CperSectionBody::from_slice(
             header.section,
             s.get(header.size()..header.size() + header.error_data_length as usize)?,
         )?;
@@ -153,36 +153,32 @@ pub struct Berr {
 }
 
 impl Berr {
-    pub fn from_crashlog(crashlog: &CrashLog) -> Berr {
+    /// Create a Boot Error Region from a Crash Log
+    pub fn from_crashlog(crashlog: &CrashLog) -> Self {
         let header = GenericErrorStatusBlock::default();
         let entries = crashlog
             .regions
             .iter()
             .map(|region| {
                 let header = GenericErrorDataEntryHeader {
-                    section: FW_ERROR_RECORD_GUID,
+                    section: guids::FW_ERROR_RECORD,
                     revision: 0x300,
                     ..GenericErrorDataEntryHeader::default()
                 };
-                let cper_section = CperSection::FirmwareErrorRecord(FirmwareErrorRecord {
-                    header: FirmwareErrorRecordHeader {
-                        error_type: 2,
-                        revision: 2,
-                        guid: RECORD_ID_CRASHLOG,
-                        ..FirmwareErrorRecordHeader::default()
-                    },
-                    payload: region.to_bytes(),
-                });
+                let cper_section = CperSectionBody::FirmwareErrorRecord(
+                    FirmwareErrorRecord::from_crashlog_region(region),
+                );
                 GenericErrorDataEntry {
                     header,
                     cper_section,
                 }
             })
             .collect();
-        Berr { header, entries }
+        Self { header, entries }
     }
 
-    pub fn from_bert_file(s: &[u8]) -> Option<Berr> {
+    /// Parses a Boot Error Region from BERT file
+    pub fn from_bert_file(s: &[u8]) -> Option<Self> {
         if s.starts_with(b"BERR") {
             Berr::from_slice(s.get(4..)?)
         } else if s.starts_with(b"BERT") {
@@ -192,6 +188,7 @@ impl Berr {
         }
     }
 
+    /// Parses a Boot Error Region from a slice
     pub fn from_slice(s: &[u8]) -> Option<Berr> {
         let header = GenericErrorStatusBlock::from_slice(s)?;
 
@@ -210,6 +207,7 @@ impl Berr {
         Some(Berr { header, entries })
     }
 
+    /// Converts a Boot Error Region into a byte vector.
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut header = self.header.clone();
         header.data_length = 0;

@@ -102,7 +102,7 @@ impl CrashLog {
         let regions: Vec<Region> = cper
             .sections
             .iter()
-            .filter_map(|section| Region::from_cper_section(&section.section))
+            .filter_map(|section| Region::from_cper_section(&section.body))
             .collect();
 
         if regions.is_empty() {
@@ -124,8 +124,8 @@ impl CrashLog {
         }
     }
 
-    /// Exports the [CrashLog] as a sequence of bytes.
-    pub fn to_bytes(&self) -> Vec<u8> {
+    /// Exports the [CrashLog] as a BERT file.
+    pub fn to_bert(&self) -> Vec<u8> {
         let mut berr = Berr::from_crashlog(self).to_bytes();
         let bert = Bert {
             region: 0,
@@ -136,6 +136,12 @@ impl CrashLog {
         let mut bytes = bert.to_bytes();
         bytes.append(&mut berr);
         bytes
+    }
+
+    /// Exports the [CrashLog] as a CPER file that wraps the Crash Log regions into Firmware Error
+    /// Record sections.
+    pub fn to_bytes(&self) -> Vec<u8> {
+        Cper::from_raw_crashlog(self).to_bytes()
     }
 
     /// Returns the register tree representation of the Crash Log record headers.
