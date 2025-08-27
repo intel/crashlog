@@ -1,0 +1,20 @@
+{
+    "fullname": "graniterapids",
+    "product": "GNR",
+    "product_id": "0x2F",
+    "subproducts": [
+        {
+            "product": "RWC",
+            "stepping": "all",
+            "variant": "all"
+        }
+    ],
+    "variant": "SP",
+    "die_id": {
+        "0": "io0",
+        "4": "io1",
+        "9": "compute0",
+        "10": "compute1",
+        "11": "compute2"
+    }
+}
