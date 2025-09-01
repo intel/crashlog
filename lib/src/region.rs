@@ -35,10 +35,9 @@ impl Region {
         }
     }
 
-    pub(crate) fn set_socket_and_die_ids(&mut self, socket_id: u8, die_id: u8) {
+    pub(crate) fn set_child_context(&mut self, hdr: &Header) {
         for record in self.records.iter_mut() {
-            record.context.socket_id = Some(socket_id);
-            record.context.die_id = Some(die_id);
+            record.context.parent_header = Some(hdr.clone());
         }
     }
 

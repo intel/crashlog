@@ -82,7 +82,7 @@ fn legacy_type0_box() {
     let root = crashlog.decode(&mut cm);
 
     let product_id = root
-        .get_by_path("processors.cpu1.die10.mca.hdr.version.product_id")
+        .get_by_path("processors.cpu1.compute1.mca.hdr.version.product_id")
         .unwrap();
 
     assert_eq!(product_id.kind, NodeType::Field { value: 0x79 });

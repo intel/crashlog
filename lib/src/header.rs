@@ -37,7 +37,7 @@ pub mod record_types {
     pub const MCA: u8 = 0x3E;
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub enum HeaderType {
     Type0,
     #[default]
@@ -237,7 +237,7 @@ impl HeaderType {
 }
 
 /// Header of a Crash Log record
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Header {
     /// Version ID
     pub version: Version,
@@ -436,29 +436,28 @@ impl Header {
         &self,
         cm: &CollateralManager<T>,
     ) -> Option<String> {
-        match self.header_type {
-            HeaderType::Type6 { socket_id, .. }
-            | HeaderType::Type0LegacyServer { socket_id, .. } => {
-                if let Some(die) = self.die(cm) {
-                    Some(format!("processors.cpu{socket_id}.{die}"))
-                } else {
-                    self.get_root_path()
-                }
-            }
-            _ => None,
+        if let HeaderType::Type6 { socket_id, .. } | HeaderType::Type0LegacyServer { socket_id, .. } =
+            self.header_type
+            && let Some(die) = self.die(cm)
+        {
+            return Some(format!("processors.cpu{socket_id}.{die}"));
         }
+
+        None
     }
 
     pub(super) fn get_root_path(&self) -> Option<String> {
-        match self.header_type {
-            HeaderType::Type6 {
-                socket_id, die_id, ..
-            }
-            | HeaderType::Type0LegacyServer {
-                socket_id, die_id, ..
-            } => Some(format!("processors.cpu{socket_id}.die{die_id}")),
-            _ => None,
+        if let HeaderType::Type6 {
+            socket_id, die_id, ..
         }
+        | HeaderType::Type0LegacyServer {
+            socket_id, die_id, ..
+        } = self.header_type
+        {
+            return Some(format!("processors.cpu{socket_id}.die{die_id}"));
+        }
+
+        None
     }
 }
 
@@ -574,7 +573,7 @@ impl fmt::Display for Version {
 }
 
 /// Size of the Crash Log record
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct RecordSize {
     /// Size of the main section of the record in dwords
     pub record_size: u16,
