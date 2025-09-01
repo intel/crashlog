@@ -24,10 +24,8 @@ pub struct Record {
 /// Additional data provided to a Crash Log record
 #[derive(Clone, Default)]
 pub struct Context {
-    /// Die ID of the record
-    pub die_id: Option<u8>,
-    /// Socket ID of the record
-    pub socket_id: Option<u8>,
+    /// Header of the parent record
+    pub parent_header: Option<Header>,
 }
 
 impl Record {

@@ -9,7 +9,7 @@ use crate::header::record_types;
 use crate::node::Node;
 use crate::node::NodeType;
 #[cfg(not(feature = "std"))]
-use alloc::{borrow::ToOwned, format, str, string::String, vec::Vec};
+use alloc::{borrow::ToOwned, str, string::String, vec::Vec};
 use log::debug;
 #[cfg(feature = "std")]
 use std::str;
@@ -173,8 +173,9 @@ impl Record {
         if let Some(custom_root) = self.header.get_root_path() {
             return Some(custom_root);
         }
-        if let (Some(socket_id), Some(die_id)) = (self.context.socket_id, self.context.die_id) {
-            return Some(format!("processors.cpu{socket_id}.die{die_id}"));
+
+        if let Some(parent_header) = &self.context.parent_header {
+            return parent_header.get_root_path();
         }
 
         None
@@ -189,16 +190,13 @@ impl Record {
             return Some(custom_root);
         }
 
-        if let (Some(socket_id), Some(die_id)) = (self.context.socket_id, self.context.die_id) {
-            let die = if let Some(die_name) = self.header.get_die_name(&die_id, cm) {
-                die_name
-            } else {
-                &format!("die{die_id}")
-            };
-            return Some(format!("processors.cpu{socket_id}.{die}"));
+        if let Some(parent_header) = &self.context.parent_header
+            && let Some(parent_custom_root) = parent_header.get_root_path_using_cm(cm)
+        {
+            return Some(parent_custom_root);
         }
 
-        None
+        self.get_root_path()
     }
 
     /// Decodes a section of the [Record] located at the given `offset` into a [Node] tree using

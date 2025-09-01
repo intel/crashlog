@@ -14,7 +14,6 @@ use alloc::{collections::VecDeque, vec, vec::Vec};
 #[cfg(feature = "std")]
 use std::collections::VecDeque;
 
-use crate::header::HeaderType;
 use crate::header::record_types;
 
 /// Set of all the Crash Log records captured on a platform.
@@ -48,15 +47,7 @@ impl CrashLog {
 
                 match Region::from_slice(payload) {
                     Ok(mut region) => {
-                        if let HeaderType::Type6 {
-                            socket_id, die_id, ..
-                        }
-                        | HeaderType::Type0LegacyServer {
-                            socket_id, die_id, ..
-                        } = record.header.header_type
-                        {
-                            region.set_socket_and_die_ids(socket_id, die_id)
-                        };
+                        region.set_child_context(&record.header);
                         queue.push_front(region)
                     }
                     Err(err) => log::warn!("Invalid region in Box record: {err}"),
