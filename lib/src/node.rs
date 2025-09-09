@@ -177,6 +177,46 @@ impl Node {
         Some(ptr)
     }
 
+    /// Returns the value associated to the node if present.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intel_crashlog::prelude::*;
+    ///
+    /// let field = Node::field("foo", 42);
+    /// assert_eq!(field.value(), Some(42));
+    /// let section = Node::section("bar");
+    /// assert_eq!(section.value(), None);
+    /// ```
+    pub fn value(&self) -> Option<u64> {
+        if let NodeType::Field { value } = self.kind {
+            Some(value)
+        } else {
+            None
+        }
+    }
+
+    /// Returns the value of the field stored at the given path.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intel_crashlog::prelude::*;
+    ///
+    /// let mut foo = Node::section("foo");
+    /// foo.add(Node::field("bar", 42));
+    /// let mut root = Node::root();
+    /// root.add(foo);
+    ///
+    /// assert_eq!(root.get_value_by_path("foo.bar"), Some(42));
+    /// assert_eq!(root.get_value_by_path("foo"), None);
+    /// assert_eq!(root.get_value_by_path("foo.baz"), None);
+    /// ```
+    pub fn get_value_by_path(&self, path: &str) -> Option<u64> {
+        self.get_by_path(path).and_then(|node| node.value())
+    }
+
     fn merge_instance(&mut self, mut other: Node) {
         let mut instance = 0;
         let name = other.name.clone();

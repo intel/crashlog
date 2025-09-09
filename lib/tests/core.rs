@@ -11,7 +11,7 @@ fn lnc_three_strike_timeout() {
     let nodes = crashlog.decode(&mut cm);
 
     let status = nodes
-        .get_by_path("core0.thread.arch_state.mca.bank3.status")
+        .get_by_path("pcore.core0.thread0.thread.arch_state.mca.bank3.status")
         .unwrap();
     assert_eq!(
         status.kind,
@@ -20,7 +20,9 @@ fn lnc_three_strike_timeout() {
         }
     );
 
-    let lip = nodes.get_by_path("core0.thread.arch_state.lip").unwrap();
+    let lip = nodes
+        .get_by_path("pcore.core0.thread0.thread.arch_state.lip")
+        .unwrap();
     assert_eq!(
         lip.kind,
         NodeType::Field {
@@ -28,7 +30,7 @@ fn lnc_three_strike_timeout() {
         }
     );
 
-    let entry = nodes.get_by_path("core0.sq.entry0").unwrap();
+    let entry = nodes.get_by_path("pcore.core0.thread0.sq.entry0").unwrap();
     assert_eq!(
         entry.kind,
         NodeType::Field {
