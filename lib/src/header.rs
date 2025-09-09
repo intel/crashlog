@@ -5,7 +5,7 @@
 
 #[cfg(feature = "collateral_manager")]
 use crate::collateral::{CollateralManager, CollateralTree, ItemPath, PVSS};
-use crate::errata::Errata;
+use crate::errata::{Errata, SERVER_LEGACY_PRODUCT_IDS};
 use crate::error::Error;
 use crate::node::Node;
 #[cfg(not(feature = "std"))]
@@ -551,7 +551,8 @@ impl Version {
     }
 
     pub fn into_errata(&self) -> Errata {
-        let type0_legacy_server = self.header_type == 0 && self.product_id == 0x2f;
+        let type0_legacy_server =
+            self.header_type == 0 && SERVER_LEGACY_PRODUCT_IDS.contains(&self.product_id);
         let type0_legacy_server_box = type0_legacy_server && self.record_type == 0x4;
         let core_record_size_bytes = !type0_legacy_server
             && ((self.record_type == record_types::ECORE && self.product_id < 0x96)

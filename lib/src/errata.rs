@@ -31,11 +31,17 @@ pub struct Errata {
     pub core_record_size_bytes: bool,
 }
 
+const GNR_SP_PRODUCT_ID: u32 = 0x2f;
+const SRF_SP_PRODUCT_ID: u32 = 0x82;
+pub const SERVER_LEGACY_PRODUCT_IDS: [u32; 2] = [GNR_SP_PRODUCT_ID, SRF_SP_PRODUCT_ID];
+
 impl Errata {
     pub fn from_version(version: &Version) -> Self {
-        let type0_legacy_server = version.header_type == 0 && version.product_id == 0x2f;
+        let type0_legacy_server =
+            version.header_type == 0 && SERVER_LEGACY_PRODUCT_IDS.contains(&version.product_id);
         let type0_legacy_server_box =
             type0_legacy_server && version.record_type == record_types::PCORE;
+
         let core_record_size_bytes = !type0_legacy_server
             && ((version.record_type == record_types::ECORE && version.product_id < 0x96)
                 || (version.record_type == record_types::PCORE && version.product_id < 0x71));
