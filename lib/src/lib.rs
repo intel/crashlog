@@ -82,11 +82,13 @@
 //! let nodes = crashlog.decode(&mut cm);
 //!
 //! // Get the status register of the fourth MCA bank from the register tree.
-//! let status = nodes.get_by_path("core0.thread.arch_state.mca.bank3.status").unwrap();
+//! let status = nodes.get_by_path(
+//!     "pcore.core0.thread0.thread.arch_state.mca.bank3.status"
+//! ).unwrap();
 //! assert_eq!(status.kind, NodeType::Field { value: 0xbe000000e1840400 });
 //!
 //! // Get the instruction pointer of the first core.
-//! let lip = nodes.get_by_path("core0.thread.arch_state.lip").unwrap();
+//! let lip = nodes.get_by_path("pcore.core0.thread0.thread.arch_state.lip").unwrap();
 //! assert_eq!(lip.kind, NodeType::Field { value: 0xfffff80577036530 });
 //! ```
 //!
