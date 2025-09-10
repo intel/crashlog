@@ -1,0 +1,13 @@
+{
+    "fullname": "sierraforest",
+    "product": "SRF",
+    "product_id": "0x82",
+    "variant": "SP",
+    "die_id": {
+        "0": "io0",
+        "4": "io1",
+        "9": "compute0",
+        "10": "compute1",
+        "11": "compute2"
+    }
+}
