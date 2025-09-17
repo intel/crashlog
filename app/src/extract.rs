@@ -15,20 +15,18 @@ pub fn extract(output_path: Option<&Path>) {
     }
     #[cfg(target_os = "linux")]
     {
-        let crashlogs: Vec<CrashLog> = [CrashLog::from_acpi_sysfs(), CrashLog::from_pmt_sysfs()]
+        result = Ok([CrashLog::from_acpi_sysfs(), CrashLog::from_pmt_sysfs()]
             .into_iter()
             .filter_map(|crashlog| crashlog.ok())
-            .collect();
-
-        result = if crashlogs.is_empty() {
-            Err(Error::NoCrashLogFound)
-        } else {
-            Ok(crashlogs)
-        };
+            .collect::<Vec<CrashLog>>());
     }
 
     match result {
         Ok(crashlogs) => {
+            if crashlogs.is_empty() {
+                log::error!("{}", Error::NoCrashLogFound);
+            }
+
             for (i, crashlog) in crashlogs.iter().enumerate() {
                 let mut path = if let Some(output_path) = output_path {
                     let mut path = output_path.to_path_buf();
