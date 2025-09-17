@@ -73,6 +73,10 @@ impl Cper {
             cper.append_section(section);
         }
 
+        for extra_cper_section in crashlog.metadata.extra_cper_sections.iter() {
+            cper.append_section(CperSection::from_body(extra_cper_section.clone()));
+        }
+
         cper
     }
 

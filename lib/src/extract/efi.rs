@@ -98,6 +98,7 @@ impl CrashLog {
                 })
                 .inspect_err(|err| log::warn!("Cannot get time: {err}"))
                 .ok(),
+            ..Default::default()
         };
 
         Ok(crashlog)

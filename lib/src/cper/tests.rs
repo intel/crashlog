@@ -37,7 +37,12 @@ fn cl_from_cper() {
         }
     }
 
+    assert_eq!(crashlog.metadata.extra_cper_sections.len(), 2);
     assert_eq!(records.len(), 3);
+
+    let cper_bytes = crashlog.to_bytes();
+    let cper = Cper::from_slice(&cper_bytes).unwrap();
+    assert_eq!(cper.record_header.section_count, 5);
 }
 
 #[test]
