@@ -7,11 +7,11 @@ decoding and extracting data using Intel® Crash Log Technology. It can function
 as a standalone application or be integrated into other applications.
 
 >[!WARNING] 
-> This tool is in the early stages of development and does not yet support all
-> platforms utilizing Crash Log technology. However, it can decode the common
-> header structure on unsupported platforms. We are actively working to expand
-> platform support. Additionally, the set of registers collected may vary
-> between projects.
+> This tool supports a limited number of platforms utilizing Crash Log
+> technology. However, it can decode the common Crash Log header structure on
+> unsupported platforms. We are actively working to expand platform support.
+> Additionally, the set of registers collected may vary between projects and
+> the register layout may be updated in future releases.
 
 ## What is Intel® Crash Log Technology?
 
@@ -30,6 +30,8 @@ the EFI shell.
 
 - Extract Intel Crash Log records from Windows Event Logs, Linux sysfs, and the
   EFI shell.
+- Store and convert the Intel Crash Log records in the UEFI CPER format
+  (as described in the UEFI Specification Appendix N).
 - Decode Intel Crash Log records and export the content as JSON.
 
 ## Repository Structure

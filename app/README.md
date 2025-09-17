@@ -29,7 +29,7 @@ To build and install the application, follow these steps:
 ## Usage
 
 For detailed usage instructions, please refer to the
-[main README](../README.md#Usages).
+[main README](../README.md#Usage).
 
 ## Development
 

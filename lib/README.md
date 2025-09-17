@@ -10,6 +10,7 @@
   the library.
 - Offers FFI to interface with non-Rust applications.
 - Supports `no_std`.
+- Follows [Semantic Versioning](https://semver.org/) convention.
 
 ## Usage
 
@@ -99,7 +100,7 @@ Intel products. You can access the high-level information stored in the records
 as follows:
 
 ```rust
-use intel_crashlog::CrashLog;
+use intel_crashlog::prelude::*;
 
 // Read the Crash Log binary from a file
 let data = std::fs::read("tests/samples/dummy_mca_rev1.crashlog").unwrap();
@@ -152,8 +153,7 @@ collateral manager. This manager provides unified access to product-specific
 definitions.
 
 ```rust
-use intel_crashlog::{CrashLog, CollateralManager};
-use intel_crashlog::node::NodeType;
+use intel_crashlog::prelude::*;
 
 // Read the Crash Log binary from a file.
 let data = std::fs::read("tests/samples/dummy_mca_rev1.crashlog").unwrap();
@@ -168,11 +168,13 @@ let mut cm = CollateralManager::embedded_tree().unwrap();
 let nodes = crashlog.decode(&mut cm);
 
 // Get the status register of the fourth MCA bank from the register tree.
-let status = nodes.get_by_path("core0.thread.arch_state.mca.bank3.status").unwrap();
+let status = nodes.get_by_path(
+    "pcore.core0.thread0.thread.arch_state.mca.bank3.status"
+).unwrap();
 assert_eq!(status.kind, NodeType::Field { value: 0xbe000000e1840400 });
 
 // Get the instruction pointer of the first core.
-let lip = nodes.get_by_path("core0.thread.arch_state.lip").unwrap();
+let lip = nodes.get_by_path("pcore.core0.thread0.thread.arch_state.lip").unwrap();
 assert_eq!(lip.kind, NodeType::Field { value: 0xfffff80577036530 });
 ```
 
