@@ -62,7 +62,7 @@ fn find_acpi_tables() -> Option<AcpiTables<IdentityMapped>> {
     })
 }
 
-pub fn find_bert() -> Result<Bert, Error> {
+fn find_bert() -> Result<Bert, Error> {
     let tables = find_acpi_tables().ok_or(Error::NoCrashLogFound)?;
     tables
         .find_table::<Bert>()
