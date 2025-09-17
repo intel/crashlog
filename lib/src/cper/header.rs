@@ -9,21 +9,25 @@ use super::utils;
 use crate::metadata;
 use uguid::Guid;
 
+/// cbindgen:ignore
 pub const RECORD_HEADER_SIZE: usize = 128;
 const LCF_GUID: Guid = uguid::guid!("eba67344-b876-4237-b80d-27e1297fa2ff");
 
+/// cbindgen:ignore
 pub mod validation {
     pub const PLATFORM_ID: u32 = 1;
     pub const TIMESTAMP: u32 = 2;
     pub const PARTITION_ID: u32 = 4;
 }
 
+/// cbindgen:ignore
 pub mod flags {
     pub const RECOVERED: u32 = 1 << 0;
     pub const PREVERR: u32 = 1 << 1;
     pub const SIMULATED: u32 = 1 << 2;
 }
 
+/// cbindgen:ignore
 pub mod notification_types {
     use uguid::Guid;
     pub const BOOT: Guid = uguid::guid!("3d61a466-ab40-409a-a698-f362d464b38f");

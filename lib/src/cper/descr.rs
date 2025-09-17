@@ -7,13 +7,16 @@ use alloc::vec::Vec;
 use super::revision::Revision;
 use uguid::Guid;
 
+/// cbindgen:ignore
 pub const SECTION_DESCRIPTOR_SIZE: usize = 72;
 
+/// cbindgen:ignore
 mod validation {
     pub const FRU_ID: u8 = 1;
     pub const FRU_STRING: u8 = 2;
 }
 
+/// cbindgen:ignore
 mod flags {
     pub const PRIMARY: u32 = 1 << 0;
     pub const CONTAINMENT_WARNING: u32 = 1 << 1;

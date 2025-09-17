@@ -13,7 +13,9 @@ pub mod guids {
     pub const RECORD_ID_CRASHLOG: Guid = uguid::guid!("8f87f311-c998-4d9e-a0c4-6065518c4f6d");
 }
 
+/// cbindgen:ignore
 pub const HEADER_REV1_SIZE: usize = 16;
+/// cbindgen:ignore
 pub const HEADER_REV2_SIZE: usize = 32;
 
 /// UEFI 2.10 N.2.10. Firmware Error Record Reference Header
