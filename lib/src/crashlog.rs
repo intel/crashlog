@@ -5,7 +5,7 @@ use crate::Error;
 use crate::bert::{Berr, Bert};
 #[cfg(feature = "collateral_manager")]
 use crate::collateral::{CollateralManager, CollateralTree};
-use crate::cper::Cper;
+use crate::cper::{Cper, CperSectionBody};
 use crate::metadata::Metadata;
 use crate::node::Node;
 use crate::region::Region;
@@ -90,17 +90,24 @@ impl CrashLog {
 
     /// Extracts the Crash Log records from [Cper] record.
     pub(crate) fn from_cper(cper: Cper) -> Result<Self, Error> {
-        let regions: Vec<Region> = cper
-            .sections
-            .iter()
-            .filter_map(|section| Region::from_cper_section(&section.body))
-            .collect();
+        let mut regions: Vec<Region> = Vec::new();
+        let mut extra_cper_sections: Vec<CperSectionBody> = Vec::new();
+
+        for section in cper.sections {
+            if let Some(region) = Region::from_cper_section(&section.body) {
+                regions.push(region);
+            } else {
+                extra_cper_sections.push(section.body);
+            }
+        }
 
         if regions.is_empty() {
             return Err(Error::NoCrashLogFound);
         }
 
-        CrashLog::from_regions(regions)
+        let mut crashlog = CrashLog::from_regions(regions)?;
+        crashlog.metadata.extra_cper_sections = extra_cper_sections;
+        Ok(crashlog)
     }
 
     /// Decodes a raw Crash Log binary.

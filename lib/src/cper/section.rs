@@ -15,6 +15,7 @@ pub mod guids {
 }
 
 /// One of the CPER section bodies defined in the UEFI 2.10 Specifications (N.2)
+#[derive(Clone)]
 pub enum CperSectionBody {
     FirmwareErrorRecord(FirmwareErrorRecord),
     Unknown(Guid, Vec<u8>),
