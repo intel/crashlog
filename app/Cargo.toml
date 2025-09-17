@@ -1,6 +1,6 @@
 [package]
 name = "intel_crashlog_app"
-version = "0.2.0"
+version = "1.0.0"
 edition = "2024"
 license = "MIT"
 publish = false
@@ -12,7 +12,7 @@ path = "src/main.rs"
 [dependencies]
 log = "0.4"
 env_logger = "0.11"
-intel_crashlog = { version = "0.2", path = "../lib"}
+intel_crashlog = { version = "1.0", path = "../lib"}
 serde_json = "1.0"
 
 [dependencies.clap]

@@ -39,7 +39,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "intel_crashlog"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "acpi",
  "cargo-emit",
@@ -54,7 +54,7 @@ dependencies = [
 
 [[package]]
 name = "intel_crashlog_efi"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "acpi",
  "intel_crashlog",

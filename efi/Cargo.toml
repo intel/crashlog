@@ -1,6 +1,6 @@
 [package]
 name = "intel_crashlog_efi"
-version = "0.2.0"
+version = "1.0.0"
 edition = "2024"
 license = "MIT"
 publish = false
@@ -14,7 +14,7 @@ acpi = "5.0"
 log = "0.4"
 
 [dependencies.intel_crashlog]
-version = "0.2"
+version = "1.0"
 path = "../lib"
 default-features = false
 features = [
