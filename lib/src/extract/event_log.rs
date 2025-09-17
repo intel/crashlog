@@ -14,7 +14,7 @@ use windows::Win32::System::EventLog::*;
 use windows::Win32::System::Time::FileTimeToSystemTime;
 use windows::core::*;
 
-pub struct EvtHandle(EVT_HANDLE);
+struct EvtHandle(EVT_HANDLE);
 
 impl Drop for EvtHandle {
     fn drop(&mut self) {
@@ -62,7 +62,7 @@ fn evt_next(result_set: &EvtHandle, count: usize) -> Result<Vec<EvtHandle>> {
         .collect())
 }
 
-pub struct EvtRenderedValues {
+struct EvtRenderedValues {
     buffer: *mut u8,
     layout: Layout,
     property_count: u32,
