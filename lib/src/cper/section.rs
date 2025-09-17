@@ -1,3 +1,6 @@
+// Copyright (C) 2025 Intel Corporation
+// SPDX-License-Identifier: MIT
+
 pub mod fer;
 
 #[cfg(not(feature = "std"))]

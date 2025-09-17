@@ -1,3 +1,6 @@
+// Copyright (C) 2025 Intel Corporation
+// SPDX-License-Identifier: MIT
+
 #[cfg(not(feature = "std"))]
 use alloc::{fmt, vec, vec::Vec};
 #[cfg(feature = "std")]
