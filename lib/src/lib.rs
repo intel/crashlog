@@ -3,7 +3,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![feature(doc_cfg)]
-#![feature(doc_auto_cfg)]
 
 //! ## Getting Started
 //!
