@@ -1,10 +1,8 @@
 // Copyright (C) 2025 Intel Corporation
 // SPDX-License-Identifier: MIT
-#![feature(assert_matches)]
-
 use intel_crashlog::header::{RecordSize, Version};
 use intel_crashlog::prelude::*;
-use std::assert_matches::assert_matches;
+use std::assert_matches;
 use std::fs;
 use std::path::Path;
 
