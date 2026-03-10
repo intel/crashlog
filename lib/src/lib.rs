@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![feature(doc_cfg)]
+#![cfg_attr(doc, feature(doc_cfg))]
 
 //! ## Getting Started
 //!
