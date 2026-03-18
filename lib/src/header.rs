@@ -192,13 +192,13 @@ impl HeaderType {
         let reason = u32::from_le_bytes(slice.get(4..8)?.try_into().ok()?);
         let timestamp = u64::from_le_bytes(slice.get(8..16)?.try_into().ok()?);
         let agent_version = u32::from_le_bytes(slice.get(20..24)?.try_into().ok()?);
-        let socket_id = slice[24];
+        let socket_id = *slice.get(24)?;
         let cs_data = u32::from_le_bytes(slice.get(28..32)?.try_into().ok()?);
         let completion_status = cs_data & 0x7FFFFFFF;
         let collection_complete = (cs_data >> 31) != 0;
 
         // Encoded die_id
-        let revision = slice[0];
+        let revision = slice.first()?;
         let die_idx = revision & 0x3;
 
         let die_id = if ((revision >> 7) & 1) == 1 {
