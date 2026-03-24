@@ -1,0 +1,18 @@
+{
+    "fullname": "pantherlake",
+    "product": "PTL",
+    "product_id": "0x087",
+    "subproducts": [
+        {
+            "product": "CGC",
+            "stepping": "all",
+            "variant": "all"
+        },
+        {
+            "product": "DKT",
+            "stepping": "all",
+            "variant": "all"
+        }
+    ],
+    "variant": "H"
+}
