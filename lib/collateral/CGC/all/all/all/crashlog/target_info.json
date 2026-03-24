@@ -1,0 +1,10 @@
+{
+    "inherit": {
+        "product": "LNC",
+        "stepping": "all",
+        "variant": "all"
+    },
+    "native_model_id": "0x40",
+    "product": "CGC",
+    "product_id": "0x085"
+}

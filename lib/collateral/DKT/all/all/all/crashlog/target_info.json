@@ -1,4 +1,10 @@
 {
+    "inherit": {
+        "product": "SKT",
+        "stepping": "all",
+        "variant": "all"
+    },
+    "native_model_id": "0x20",
     "product": "DKT",
     "product_id": "0x6E"
 }
