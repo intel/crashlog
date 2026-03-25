@@ -27,7 +27,7 @@ impl Default for PVSS {
             product: "all".into(),
             variant: "all".into(),
             stepping: "all".into(),
-            security: "green".into(),
+            security: "all".into(),
         }
     }
 }

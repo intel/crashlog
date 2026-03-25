@@ -77,11 +77,47 @@ impl<T: CollateralTree> CollateralManager<T> {
     /// let mut cm = CollateralManager::embedded_tree().unwrap();
     /// let pvss = PVSS {
     ///     product: "XYZ".into(),
+    ///     security: "all".into(),
     ///     ..PVSS::default()
     /// };
     /// assert!(cm.get_item_with_pvss(pvss, "target_info.json").is_ok());
     /// ```
     pub fn get_item_with_pvss(
+        &mut self,
+        pvss: PVSS,
+        path: impl Into<ItemPath>,
+    ) -> Result<&[u8], Error> {
+        let index = ItemIndex {
+            pvss,
+            path: path.into(),
+        };
+
+        if !self.items.contains_key(&index) {
+            let item = self.tree.get(&index.pvss, &index.path)?;
+            self.items.insert(index.clone(), item);
+        }
+
+        self.items
+            .get(&index)
+            .map(|i| i.as_ref())
+            .ok_or(Error::InternalError)
+    }
+
+    /// Similar to [`CollateralManager::get_item_with_pvss`] but ignores the `security` specified
+    /// in the [`PVSS`] and returns the item with the highest security level.
+    ///
+    /// ```
+    /// use intel_crashlog::prelude::*;
+    /// use intel_crashlog::collateral::PVSS;
+    ///
+    /// let mut cm = CollateralManager::embedded_tree().unwrap();
+    /// let pvss = PVSS {
+    ///     product: "XYZ".into(),
+    ///     ..PVSS::default()
+    /// };
+    /// assert!(cm.get_item_with_pvs(pvss, "target_info.json").is_ok());
+    /// ```
+    pub fn get_item_with_pvs(
         &mut self,
         pvss: PVSS,
         path: impl Into<ItemPath>,
@@ -104,25 +140,20 @@ impl<T: CollateralTree> CollateralManager<T> {
     fn fetch_item(&mut self, index: &ItemIndex) -> Result<(), Error> {
         let security_levels = ["red", "white", "green", "all"];
 
-        if let Some(i) = security_levels
-            .iter()
-            .position(|s| *s == index.pvss.security)
-        {
-            for security in &security_levels[i..] {
-                let pvss = PVSS {
-                    security: security.to_string(),
-                    ..index.pvss.clone()
-                };
-                match self.tree.get(&pvss, &index.path) {
-                    Ok(item) => {
-                        self.items.insert(index.clone(), item);
-                        return Ok(());
-                    }
-                    Err(Error::MissingCollateral(_, item)) => {
-                        log::debug!("No {security} {item} defined")
-                    }
-                    Err(err) => log::warn!("Unexpected error while fetching item: {err}"),
+        for security in security_levels {
+            let pvss = PVSS {
+                security: security.to_string(),
+                ..index.pvss.clone()
+            };
+            match self.tree.get(&pvss, &index.path) {
+                Ok(item) => {
+                    self.items.insert(index.clone(), item);
+                    return Ok(());
                 }
+                Err(Error::MissingCollateral(_, item)) => {
+                    log::debug!("No {security} {item} defined")
+                }
+                Err(err) => log::warn!("Unexpected error while fetching item: {err}"),
             }
         }
 
@@ -130,40 +161,6 @@ impl<T: CollateralTree> CollateralManager<T> {
             index.pvss.clone(),
             index.path.clone(),
         ))
-    }
-
-    /// Returns the content of an item from the collateral tree using the [`PVSS`] of the target.
-    ///
-    /// ```
-    /// use intel_crashlog::prelude::*;
-    /// use intel_crashlog::collateral::PVSS;
-    ///
-    /// let mut cm = CollateralManager::embedded_tree().unwrap();
-    /// let pvss = PVSS {
-    ///     product: "XYZ".into(),
-    ///     ..PVSS::default()
-    /// };
-    /// assert!(cm.get_item_with_pvss(pvss, "target_info.json").is_ok());
-    /// ```
-    pub fn get_item_with_pvs(
-        &mut self,
-        pvss: PVSS,
-        path: impl Into<ItemPath>,
-    ) -> Result<&[u8], Error> {
-        let index = ItemIndex {
-            pvss,
-            path: path.into(),
-        };
-
-        if !self.items.contains_key(&index) {
-            let item = self.tree.get(&index.pvss, &index.path)?;
-            self.items.insert(index.clone(), item);
-        }
-
-        self.items
-            .get(&index)
-            .map(|i| i.as_ref())
-            .ok_or(Error::InternalError)
     }
 
     /// Returns the content of an item from the collateral tree using the Crash Log header.
@@ -181,6 +178,6 @@ impl<T: CollateralTree> CollateralManager<T> {
         header: &Header,
         path: impl Into<ItemPath>,
     ) -> Result<&[u8], Error> {
-        self.get_item_with_pvss(header.pvss(self)?, path)
+        self.get_item_with_pvs(header.pvss(self)?, path)
     }
 }
