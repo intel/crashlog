@@ -22,7 +22,7 @@ fn compact<T: CollateralTree>(cm: &CollateralManager<T>, input: &Path) -> Result
             let record_type = if let Ok(record_type) = record.header.record_type() {
                 record_type.into()
             } else {
-                format!("{:#02x}", record.header.version.record_type)
+                format!("{:#04x}", record.header.version.record_type)
             };
 
             let checksum = record
@@ -117,7 +117,7 @@ fn markdown<T: CollateralTree>(cm: &CollateralManager<T>, input: &Path) -> Resul
             let record_type = if let Ok(record_type) = record.header.record_type() {
                 record_type.into()
             } else {
-                format!("{:#02x}", record.header.version.record_type)
+                format!("{:#04x}", record.header.version.record_type)
             };
 
             let checksum = record
