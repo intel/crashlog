@@ -61,7 +61,7 @@ pub fn info(input_path: &Path) -> Result<(), uefi::Error> {
             let record_type = if let Ok(record_type) = record.header.record_type() {
                 record_type.into()
             } else {
-                format!("{:#02x}", record.header.version.record_type)
+                format!("{:#04x}", record.header.version.record_type)
             };
 
             let checksum = record
