@@ -8,9 +8,8 @@ records directly from the terminal.
 To build and install the application, follow these steps:
 
 1. **Build the Application in Release Mode:**
-  
+
   ```
-  $ rustup default nightly
   $ cargo build --release
   ```
 
