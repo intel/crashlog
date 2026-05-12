@@ -18,19 +18,14 @@ impl Pager {
                 return Ok(());
             }
 
-            for s in line
-                .split(&self.search_pattern)
-                .intersperse(&self.search_pattern)
-            {
-                self.output.set_color(
-                    if s == self.search_pattern {
-                        Color::Yellow
-                    } else {
-                        Color::LightGray
-                    },
-                    Color::Black,
-                )?;
-                let _ = write!(self.output, "{s}");
+            for s in line.split_inclusive(&self.search_pattern) {
+                self.output.set_color(Color::LightGray, Color::Black)?;
+                let _ = write!(self.output, "{}", s.trim_end_matches(&self.search_pattern));
+
+                if s.ends_with(&self.search_pattern) {
+                    self.output.set_color(Color::Yellow, Color::Black)?;
+                    let _ = write!(self.output, "{}", &self.search_pattern);
+                }
             }
 
             self.output.set_color(Color::LightGray, Color::Black)?;

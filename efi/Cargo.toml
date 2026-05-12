@@ -10,7 +10,6 @@ name = "iclg"
 path = "src/main.rs"
 
 [dependencies]
-acpi = "5.0"
 log = "0.4"
 
 [dependencies.intel_crashlog]
@@ -31,6 +30,10 @@ features = [
     "logger",
     "global_allocator"
 ]
+
+[dependencies.acpi]
+version = "5.1"
+default-features = false
 
 [dependencies.serde_json]
 version = "1.0"

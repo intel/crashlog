@@ -3,7 +3,6 @@
 
 #![no_main]
 #![no_std]
-#![feature(iter_intersperse)]
 
 mod args;
 mod decode;
