@@ -6,7 +6,7 @@ The Lightweight Crash Log Framework is a reference implementation designed for
 decoding and extracting data using Intel® Crash Log Technology. It can function
 as a standalone application or be integrated into other applications.
 
->[!WARNING] 
+>[!WARNING]
 > This tool supports a limited number of platforms utilizing Crash Log
 > technology. However, it can decode the common Crash Log header structure on
 > unsupported platforms. We are actively working to expand platform support.
@@ -52,10 +52,6 @@ the EFI shell.
 
    Before building the project, install the Rust toolchain using
    [rustup](https://rustup.rs/).
-
-> [!NOTE]
-> The nightly toolchain is required to build this project. Install it with:
-> `rustup default nightly`
 
 2. **Install the CLI Application**
 
