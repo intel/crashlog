@@ -103,7 +103,7 @@ fn evt_render_values(context: &EvtHandle, event: &EvtHandle) -> Result<Option<Ev
 
     let res = unsafe {
         EvtRender(
-            **context,
+            Some(**context),
             **event,
             EvtRenderEventValues.0,
             0,
@@ -122,7 +122,7 @@ fn evt_render_values(context: &EvtHandle, event: &EvtHandle) -> Result<Option<Ev
 
         unsafe {
             EvtRender(
-                **context,
+                Some(**context),
                 **event,
                 EvtRenderEventValues.0,
                 values.layout.size() as u32,

@@ -35,7 +35,7 @@ impl AcpiHandler for IdentityMapped {
 fn find_acpi_tables() -> Option<AcpiTables<IdentityMapped>> {
     uefi::system::with_config_table(|config_tables| {
         for config_table in config_tables {
-            if config_table.guid != uefi::table::cfg::ACPI2_GUID {
+            if config_table.guid != uefi::table::cfg::ConfigTableEntry::ACPI2_GUID {
                 continue;
             }
 
