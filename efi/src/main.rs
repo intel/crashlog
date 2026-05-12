@@ -49,7 +49,7 @@ fn wait_for_input() {
     let _ = uefi::boot::get_handle_for_protocol::<Input>()
         .ok()
         .and_then(|handle| uefi::boot::open_protocol_exclusive::<Input>(handle).ok())
-        .and_then(|input| input.wait_for_key_event())
+        .and_then(|input| input.wait_for_key_event().ok())
         .map(|event| uefi::boot::wait_for_event(&mut [event]));
 }
 

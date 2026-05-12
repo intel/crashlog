@@ -13,7 +13,7 @@ path = "src/main.rs"
 log = "0.4"
 
 [dependencies.intel_crashlog]
-version = "1.0"
+version = "1"
 path = "../lib"
 default-features = false
 features = [
@@ -23,7 +23,7 @@ features = [
 ]
 
 [dependencies.uefi]
-version = "0.33"
+version = "0.37"
 features = [
     "alloc",
     "panic_handler",
@@ -32,11 +32,11 @@ features = [
 ]
 
 [dependencies.acpi]
-version = "5.1"
+version = "5"
 default-features = false
 
 [dependencies.serde_json]
-version = "1.0"
+version = "1"
 default-features = false
 features = [
     "alloc"

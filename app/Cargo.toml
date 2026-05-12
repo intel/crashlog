@@ -12,11 +12,11 @@ path = "src/main.rs"
 [dependencies]
 log = "0.4"
 env_logger = "0.11"
-intel_crashlog = { version = "1.0", path = "../lib"}
-serde_json = "1.0"
+intel_crashlog = { version = "1", path = "../lib"}
+serde_json = "1"
 
 [dependencies.clap]
-version = "4.5"
+version = "4"
 features = ["derive"]
 
 [profile.release]
