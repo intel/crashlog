@@ -48,9 +48,12 @@ std = [
 cargo-emit = "0.2"
 
 [dependencies]
-acpi = "5.1"
 uguid = "2.2"
 log = "0.4"
+
+[dependencies.acpi]
+version = "5.1"
+default-features = false
 
 [dependencies.serde]
 version = "1.0"

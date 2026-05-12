@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 use intel_crashlog::header::{RecordSize, Version};
 use intel_crashlog::prelude::*;
-use std::assert_matches;
 use std::fs;
 use std::path::Path;
 
@@ -195,10 +194,11 @@ fn invalid_decode_defs() {
     let csv = "name;offset;size;description;bitfield
 foo;0;64;;0
 foo.bar;=2+2;8;;0";
-    assert_matches!(
+
+    assert!(matches!(
         record.decode_with_csv(csv.as_bytes(), 0),
         Err(Error::ParseIntError(_))
-    );
+    ));
 
     let csv = "fullname;size;offset
 aaa;4;8
