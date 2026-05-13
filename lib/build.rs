@@ -53,6 +53,14 @@ fn generate_headers() {
     }
 }
 
+#[cfg(all(target_os = "linux", feature = "ffi"))]
+fn set_soname() {
+    println!(
+        "cargo:rustc-cdylib-link-arg=-Wl,-soname,libintel_crashlog.so.{}",
+        std::env::var("CARGO_PKG_VERSION_MAJOR").unwrap()
+    );
+}
+
 #[cfg(feature = "embedded_collateral_tree")]
 fn embed_collateral_tree() {
     cargo_emit::rerun_if_env_changed!(COLLATERAL_PATH_VAR);
@@ -191,6 +199,9 @@ fn visit_dirs(path: &Path) -> Vec<PathBuf> {
 fn main() {
     #[cfg(feature = "ffi")]
     generate_headers();
+
+    #[cfg(all(target_os = "linux", feature = "ffi"))]
+    set_soname();
 
     #[cfg(feature = "embedded_collateral_tree")]
     embed_collateral_tree();
