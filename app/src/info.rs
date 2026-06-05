@@ -2,14 +2,29 @@
 // SPDX-License-Identifier: MIT
 
 use super::InfoFormat;
+use super::table::{Alignment, Row, Table};
 use intel_crashlog::prelude::*;
 use std::path::Path;
 
 fn compact<T: CollateralTree>(cm: &CollateralManager<T>, input: &Path) -> Result<(), Error> {
     let crashlog = CrashLog::from_slice(&std::fs::read(input)?)?;
 
-    println!("  #   Record Type      Rev.  Product  Size   Skt  Checksum  Die      ");
-    println!("----- ---------------- ----- -------- ------ ---- --------- ---------");
+    let mut table = Table::from([
+        "  # ",
+        "Record Type",
+        "Rev.",
+        "Product",
+        "Size",
+        "Skt",
+        "Checksum",
+        "Die",
+    ]);
+
+    table.columns[0].alignment = Alignment::Center;
+    table.columns[2].alignment = Alignment::Right;
+    table.columns[4].alignment = Alignment::Right;
+    table.columns[5].alignment = Alignment::Right;
+
     for (i, region) in crashlog.regions.iter().enumerate() {
         for (j, record) in region.records.iter().enumerate() {
             let product = if let Ok(product) = record.header.product(cm) {
@@ -39,20 +54,20 @@ fn compact<T: CollateralTree>(cm: &CollateralManager<T>, input: &Path) -> Result
                     .unwrap_or_default()
             };
 
-            println!(
-                "{:>2}-{:<2} {:<16} {:>5} {:<8} {:>6} {:>4} {:<9} {}",
-                i,
-                j,
+            table.append_row(Row::from([
+                format!("{i}-{j}"),
                 record_type,
-                record.header.revision(),
+                record.header.revision().to_string(),
                 product,
-                record.header.record_size(),
-                record.header.socket_id(),
-                checksum,
-                die
-            );
+                record.header.record_size().to_string(),
+                record.header.socket_id().to_string(),
+                checksum.to_string(),
+                die.to_string(),
+            ]));
         }
     }
+
+    table.render();
 
     Ok(())
 }

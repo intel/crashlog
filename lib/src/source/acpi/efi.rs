@@ -1,4 +1,4 @@
-// Copyright (C) 2025 Intel Corporation
+// Copyright (C) 2026 Intel Corporation
 // SPDX-License-Identifier: MIT
 
 use crate::bert::Bert;
@@ -62,7 +62,7 @@ fn find_acpi_tables() -> Option<AcpiTables<IdentityMapped>> {
     })
 }
 
-fn find_bert() -> Result<Bert, Error> {
+pub(super) fn find_bert() -> Result<Bert, Error> {
     let tables = find_acpi_tables().ok_or(Error::NoCrashLogFound)?;
     tables
         .find_table::<Bert>()
@@ -73,6 +73,31 @@ fn find_bert() -> Result<Bert, Error> {
         })
 }
 
+pub(super) fn extract_crashlog() -> Result<CrashLog, Error> {
+    let mut crashlog = find_bert()
+        .and_then(|bert| {
+            unsafe { bert.berr_from_phys_mem() }.ok_or(Error::InvalidBootErrorRecordRegion)
+        })
+        .and_then(CrashLog::from_berr)?;
+
+    crashlog.metadata = metadata::Metadata {
+        computer: Some("efi".to_string()),
+        time: uefi::runtime::get_time()
+            .map(|time| metadata::Time {
+                year: time.year(),
+                month: time.month(),
+                day: time.day(),
+                hour: time.hour(),
+                minute: time.minute(),
+            })
+            .inspect_err(|err| log::warn!("Cannot get time: {err}"))
+            .ok(),
+        ..Default::default()
+    };
+
+    Ok(crashlog)
+}
+
 impl CrashLog {
     /// Reads the Crash Log records from the EFI System Table.
     pub fn from_system_table(system_table: Option<NonNull<SystemTable>>) -> Result<Self, Error> {
@@ -80,27 +105,6 @@ impl CrashLog {
             unsafe { uefi::table::set_system_table(system_table.as_ptr()) }
         }
 
-        let mut crashlog = find_bert()
-            .and_then(|bert| {
-                unsafe { bert.berr_from_phys_mem() }.ok_or(Error::InvalidBootErrorRecordRegion)
-            })
-            .and_then(CrashLog::from_berr)?;
-
-        crashlog.metadata = metadata::Metadata {
-            computer: Some("efi".to_string()),
-            time: uefi::runtime::get_time()
-                .map(|time| metadata::Time {
-                    year: time.year(),
-                    month: time.month(),
-                    day: time.day(),
-                    hour: time.hour(),
-                    minute: time.minute(),
-                })
-                .inspect_err(|err| log::warn!("Cannot get time: {err}"))
-                .ok(),
-            ..Default::default()
-        };
-
-        Ok(crashlog)
+        extract_crashlog()
     }
 }

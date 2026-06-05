@@ -16,9 +16,11 @@ use std::{fmt, io, num, str};
 /// Errors reported by the Crash Log extraction and decoding functions.
 #[derive(Debug)]
 pub enum Error {
+    Unsupported,
     InternalError,
     InvalidCrashLog,
     NoCrashLogFound,
+    NoCrashLogSourceFound,
     #[cfg(feature = "collateral_manager")]
     MissingCollateral(PVSS, ItemPath),
     #[cfg(feature = "collateral_manager")]
@@ -45,8 +47,10 @@ impl std::error::Error for Error {}
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            Error::Unsupported => write!(f, "Feature unsupported on this device"),
             Error::InternalError => write!(f, "Internal error in the Crash Log library"),
             Error::NoCrashLogFound => write!(f, "No Crash Log could be found"),
+            Error::NoCrashLogSourceFound => write!(f, "No Crash Log source could be found"),
             Error::InvalidCrashLog => write!(f, "The Crash Log is invalid"),
             #[cfg(feature = "collateral_manager")]
             Error::MissingCollateral(pvss, item) => {

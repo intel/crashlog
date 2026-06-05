@@ -11,6 +11,7 @@ crate-type = ["cdylib", "rlib"]
 [features]
 default = [
     "analysis",
+    "control_commands",
     "extraction",
     "embedded_collateral_tree",
     "fs_collateral_tree",
@@ -21,6 +22,9 @@ analysis = []
 collateral_manager = [
     "dep:serde",
     "dep:serde_json"
+]
+control_commands = [
+    "extraction"
 ]
 extraction = [
     "dep:uefi",
@@ -45,6 +49,9 @@ serialize = [
 std = [
     "serde/std"
 ]
+
+[dev-dependencies]
+tempfile = "3"
 
 [build-dependencies]
 cargo-emit = "0.2"

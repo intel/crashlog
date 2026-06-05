@@ -102,6 +102,7 @@
 //! - `analysis`: provides functions to analyze the decoded Crash Log records.
 //! - `collateral_manager`: provides support for the project-specific decode definitions. See
 //!   [collateral] for more information.
+//! - `control_commands`: provides functions to execute Crash Log Control commands in the platform.
 //! - `extraction`: provides functions to extract the Crash Log record from the platform.
 //! - `embedded_collateral_tree`: embeds the collateral tree in the binary (requires
 //!   `collateral_manager`).
@@ -126,8 +127,6 @@ mod cper;
 mod crashlog;
 pub mod errata;
 mod error;
-#[cfg(feature = "extraction")]
-mod extract;
 #[cfg(feature = "ffi")]
 pub mod ffi;
 pub mod header;
@@ -136,6 +135,7 @@ pub mod node;
 pub mod prelude;
 pub mod record;
 pub mod region;
+pub mod source;
 mod utils;
 
 pub use crashlog::CrashLog;

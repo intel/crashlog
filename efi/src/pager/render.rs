@@ -24,7 +24,7 @@ impl Pager {
 
                 if s.ends_with(&self.search_pattern) {
                     self.output.set_color(Color::Yellow, Color::Black)?;
-                    let _ = write!(self.output, "{}", &self.search_pattern);
+                    let _ = write!(self.output, "{}", self.search_pattern);
                 }
             }
 

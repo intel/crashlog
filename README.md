@@ -120,13 +120,49 @@ as a standalone application or be integrated into other applications.
 
 ### Usage
 
-- **Extract** the Crash Log from the Windows Event Log or Linux sysfs:
+- **Extract** the Crash Log from the platform, it can be from the Windows Event
+Log or Linux sysfs:
 
 ```console
 $ iclg extract sample.crashlog
 ```
 
-- **List** all the collected records:
+By default the iclg tool will extract all the available sources, but the user
+can specify which sources can be extracted:
+
+```console
+$ iclg extract -s acpi,pmt:crashlog0
+```
+
+- **List** all available Crash Log sources in the platform. Each source
+supports different capabilities like `extract`, `trigger`, or `enable/disable`.
+
+```console
+$ iclg list
+Source         Description             Capabilities
+-------------  ----------------------  ---------------------------------
+acpi           ACPI BERT               extract
+pmt:crashlog0  PMT endpoint crashlog0  extract, trigger, enable/disable
+```
+
+- **Trigger** a Crash Log collection on-demand. Like the `extract` command,
+you can specify individual sources or trigger all sources by default. This
+command is only supported on Linux.
+
+```console
+$ iclg trigger
+```
+
+- **Enable** or **Disable** the Crash Log collection in the platform.
+Individual sources can be specified in the CLI as well. These commands are only
+supported on Linux.
+
+```console
+$ iclg enable
+$ iclg disable
+```
+
+- **List** all the collected records, in the extracted sample:
 
 ```console
 $ iclg info sample.crashlog
@@ -156,11 +192,15 @@ Extract and decode Intel Crash Log records.
 Usage: iclg [OPTIONS] [COMMAND]
 
 Commands:
+  enable   Enable the Crash Log collection in the platform
   extract  Extract the Crash Log records from the platform
   decode   Decode Crash Log records into JSON
+  disable  Disable the Crash Log collection in the platform
   info     List the Crash Log records stored in the input file
+  list     List the Crash Log sources that are present in the platform
   unpack   Unpack the Crash Log records stored in the input file
   triage   Triage the Crash Log records stored in the input files
+  trigger  Trigger an on-demand collection of Crash Log in the platform
   help     Print this message or the help of the given subcommand(s)
 
 Options:

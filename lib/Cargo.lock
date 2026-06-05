@@ -235,6 +235,7 @@ dependencies = [
  "log",
  "serde",
  "serde_json",
+ "tempfile",
  "uefi",
  "uefi-raw",
  "uguid",

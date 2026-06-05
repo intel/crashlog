@@ -13,3 +13,4 @@ pub use crate::header::Header;
 pub use crate::node::{Node, NodeType};
 pub use crate::record::Record;
 pub use crate::region::Region;
+pub use crate::source::CrashLogSource;

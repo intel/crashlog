@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: MIT
 
 mod analysis;
+mod control;
 mod decode;
 mod extract;
 mod info;
+mod list;
+mod table;
 mod unpack;
 
 use clap::{Parser, Subcommand, ValueEnum};
@@ -38,15 +41,36 @@ pub(crate) enum InfoFormat {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Enable Crash Log collection in the platform
+    Enable {
+        #[arg(short, long, value_delimiter = ',')]
+        sources: Vec<CrashLogSource>,
+    },
     /// Extract the Crash Log records from the platform
-    Extract { output_path: Option<PathBuf> },
+    Extract {
+        output_path: Option<PathBuf>,
+        #[arg(short, long, value_delimiter = ',')]
+        sources: Vec<CrashLogSource>,
+    },
     /// Decode Crash Log records into JSON
     Decode { input_file: PathBuf },
+    /// Disable Crash Log collection in the platform
+    Disable {
+        #[arg(short, long, value_delimiter = ',')]
+        sources: Vec<CrashLogSource>,
+    },
     /// List the Crash Log records stored in the input file
     Info {
         #[arg(short, long, value_enum, default_value_t = InfoFormat::default())]
         format: InfoFormat,
         input_files: Vec<PathBuf>,
+    },
+    /// List the Crash Log sources that are available in the platform with their capabilities
+    List,
+    /// Trigger an on-demand Crash Log collection in the platform
+    Trigger {
+        #[arg(short, long, value_delimiter = ',')]
+        sources: Vec<CrashLogSource>,
     },
     /// Unpack the Crash Log records stored in the input file
     Unpack { input_files: Vec<PathBuf> },
@@ -57,14 +81,21 @@ enum Command {
 impl Command {
     fn run<T: CollateralTree>(&self, mut cm: CollateralManager<T>) -> Result<(), Error> {
         match self {
-            Command::Extract { output_path } => extract::extract(output_path.as_deref()),
+            Command::Enable { sources } => control::enable(sources.clone())?,
+            Command::Extract {
+                output_path,
+                sources,
+            } => extract::extract(output_path.as_deref(), sources.clone()),
             Command::Decode { input_file } => {
                 decode::decode(&mut cm, input_file, std::io::stdout().lock())?
             }
+            Command::Disable { sources } => control::disable(sources.clone())?,
             Command::Info {
                 input_files,
                 format,
             } => info::info(&cm, input_files, *format),
+            Command::List => list::list(),
+            Command::Trigger { sources } => control::trigger(sources.clone())?,
             Command::Unpack { input_files } => {
                 for input_file in input_files {
                     if let Err(err) = unpack::unpack(input_file) {
@@ -103,5 +134,6 @@ fn main() {
 
     if let Err(err) = run(cli) {
         log::error!("Fatal Error: {err}");
+        std::process::exit(1);
     }
 }
