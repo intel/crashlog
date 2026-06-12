@@ -1,6 +1,7 @@
 // Copyright (C) 2025 Intel Corporation
 // SPDX-License-Identifier: MIT
 
+mod analysis;
 mod decode;
 mod extract;
 mod info;
@@ -49,6 +50,8 @@ enum Command {
     },
     /// Unpack the Crash Log records stored in the input file
     Unpack { input_files: Vec<PathBuf> },
+    /// Triage the Crash Log records stored in the input files
+    Triage { input_files: Vec<PathBuf> },
 }
 
 impl Command {
@@ -69,6 +72,7 @@ impl Command {
                     }
                 }
             }
+            Command::Triage { input_files } => analysis::triage_files(&mut cm, input_files),
         }
         Ok(())
     }

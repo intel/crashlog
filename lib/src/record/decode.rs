@@ -230,7 +230,7 @@ impl Record {
     pub fn decode<T: CollateralTree>(&self, cm: &mut CollateralManager<T>) -> Node {
         let is_core = ((self.header.version.record_type == record_types::PCORE)
             || (self.header.version.record_type == record_types::ECORE))
-            && !self.header.version.into_errata().type0_legacy_server_box;
+            && !self.header.version.errata().type0_legacy_server_box;
 
         let record = if is_core {
             self.decode_as_core_record(cm)

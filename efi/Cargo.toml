@@ -17,6 +17,7 @@ version = "1"
 path = "../lib"
 default-features = false
 features = [
+    "analysis",
     "embedded_collateral_tree",
     "extraction",
     "serialize",

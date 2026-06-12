@@ -33,8 +33,9 @@ pub struct Errata {
 
 const GNR_SP_PRODUCT_ID: u32 = 0x2f;
 const SRF_SP_PRODUCT_ID: u32 = 0x82;
+const CGC_PRODUCT_ID: u32 = 0x85;
 const CWF_SP_PRODUCT_ID: u32 = 0x8e;
-pub(crate) const SERVER_LEGACY_PRODUCT_IDS: [u32; 3] =
+const SERVER_LEGACY_PRODUCT_IDS: [u32; 3] =
     [GNR_SP_PRODUCT_ID, SRF_SP_PRODUCT_ID, CWF_SP_PRODUCT_ID];
 
 impl Errata {
@@ -44,9 +45,14 @@ impl Errata {
         let type0_legacy_server_box =
             type0_legacy_server && version.record_type == record_types::PCORE;
 
+        let ecore_record_with_size_in_bytes =
+            version.record_type == record_types::ECORE && version.product_id < 0x96;
+
+        let pcore_record_with_size_in_bytes = version.record_type == record_types::PCORE
+            && (version.product_id < 0x71 || version.product_id == CGC_PRODUCT_ID);
+
         let core_record_size_bytes = !type0_legacy_server
-            && ((version.record_type == record_types::ECORE && version.product_id < 0x96)
-                || (version.record_type == record_types::PCORE && version.product_id < 0x71));
+            && (ecore_record_with_size_in_bytes || pcore_record_with_size_in_bytes);
 
         Errata {
             type0_legacy_server,

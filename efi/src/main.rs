@@ -30,6 +30,9 @@ fn run_command(args: &Args) -> Result<(), uefi::Error> {
             Command::Extract { output_path } => extract::extract(output_path.as_deref()),
             Command::Info { input_paths } => {
                 for input_path in input_paths {
+                    if input_paths.len() > 1 {
+                        println!("\n{}:", input_path);
+                    }
                     if let Err(err) = decode::info(input_path) {
                         println!("Cannot decode sample: {err}");
                     }
@@ -37,6 +40,17 @@ fn run_command(args: &Args) -> Result<(), uefi::Error> {
                 Ok(())
             }
             Command::Decode { input_path } => decode::decode(input_path),
+            Command::Triage { input_paths } => {
+                for input_path in input_paths {
+                    if input_paths.len() > 1 {
+                        println!("\n{}:", input_path);
+                    }
+                    if let Err(err) = decode::triage(input_path) {
+                        println!("Cannot triage sample: {err}");
+                    }
+                }
+                Ok(())
+            }
         }
     } else {
         args.show_help();

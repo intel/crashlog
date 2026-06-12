@@ -32,7 +32,7 @@ impl CrashLog {
 
         while let Some(region) = queue.pop_front() {
             for record in region.records.iter() {
-                let errata = record.header.version.into_errata();
+                let errata = record.header.version.errata();
                 let is_box = record.header.version.record_type == record_types::BOX
                     || errata.type0_legacy_server_box;
 

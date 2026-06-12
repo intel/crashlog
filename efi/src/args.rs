@@ -28,6 +28,7 @@ pub enum Command {
     Extract { output_path: Option<PathBuf> },
     Info { input_paths: Vec<PathBuf> },
     Decode { input_path: PathBuf },
+    Triage { input_paths: Vec<PathBuf> },
 }
 
 #[derive(Default)]
@@ -106,6 +107,12 @@ impl Args {
                         return Err(ArgsError::InvalidArgument(token.to_string()));
                     }
                 }
+                "triage" => {
+                    args.command = Some(Command::Triage {
+                        input_paths: tokens.map(PathBuf::from).collect(),
+                    });
+                    break;
+                }
                 _ => return Err(ArgsError::InvalidArgument(token)),
             }
         }
@@ -126,6 +133,7 @@ impl Args {
                 println!("    extract");
                 println!("    info");
                 println!("    decode");
+                println!("    triage");
             }
             Some(Command::Extract { .. }) => {
                 println!("Usage: {} [OPTIONS] extract [OUTPUT_PATH]\n", self.app_name);
@@ -139,6 +147,18 @@ impl Args {
                 println!("    > {} info sample.crashlog", self.app_name);
                 println!(
                     "    > {} info sample0.crashlog sample1.crashlog",
+                    self.app_name
+                );
+            }
+            Some(Command::Triage { .. }) => {
+                println!(
+                    "Usage: {} [OPTIONS] triage [INPUT_PATH] ...\n",
+                    self.app_name
+                );
+                println!("Examples:");
+                println!("    > {} triage sample.crashlog", self.app_name);
+                println!(
+                    "    > {} triage sample0.crashlog sample1.crashlog",
                     self.app_name
                 );
             }

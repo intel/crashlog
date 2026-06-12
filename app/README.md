@@ -9,19 +9,19 @@ To build and install the application, follow these steps:
 
 1. **Build the Application in Release Mode:**
 
-  ```
+  ```console
   $ cargo build --release
   ```
 
 2. **Install the application:**
 
-  ```
+  ```console
   $ cargo install --path .
   ```
 
 3. **Uninstalling the application:**
 
-  ```
+  ```console
   $ cargo uninstall
   ```
 
@@ -34,7 +34,7 @@ For detailed usage instructions, please refer to the
 
 To build and test changes, use the following commands:
 
-```
+```console
 cargo build
 cargo run
 ```
@@ -46,7 +46,7 @@ ensure the following:
 
   Verify that the application builds successfully on both Windows and Linux:
 
-  ```
+  ```console
   $ cargo build --target=x86_64-unknown-linux-gnu
   $ cargo build --target=x86_64-pc-windows-gnu
   ```
@@ -55,7 +55,7 @@ ensure the following:
 
   Format the code according to the style guidelines and run the linter:
 
-  ```
+  ```console
   $ cargo fmt
   $ cargo clippy
   ```

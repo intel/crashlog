@@ -68,7 +68,7 @@
 //! use intel_crashlog::prelude::*;
 //!
 //! // Read the Crash Log binary from a file.
-//! let data = std::fs::read("tests/samples/three_strike_timeout.crashlog").unwrap();
+//! let data = std::fs::read("tests/samples/three_strike_timeout_with_xq.crashlog").unwrap();
 //!
 //! // Parse the binary into a Crash Log object.
 //! let crashlog = CrashLog::from_slice(&data).unwrap();
@@ -87,11 +87,19 @@
 //!
 //! // Get the instruction pointer of the first core.
 //! let lip = nodes.get_by_path("pcore.core0.thread0.thread.arch_state.lip").unwrap();
-//! assert_eq!(lip.kind, NodeType::Field { value: 0xfffff80577036530 });
+//! assert_eq!(lip.kind, NodeType::Field { value: 0xfffff80252753e75 });
+//!
+//! // Triage the crash
+//! let tags = Analyzer::default()
+//!     .with_input(&nodes)
+//!     .analyze()
+//!     .tags;
+//! assert_eq!(tags[0].to_string(), "CORE_TIMEOUT.SINGLE_STUCK_TRANSACTION.13014002340H");
 //! ```
 //!
 //! ## Default Features
 //!
+//! - `analysis`: provides functions to analyze the decoded Crash Log records.
 //! - `collateral_manager`: provides support for the project-specific decode definitions. See
 //!   [collateral] for more information.
 //! - `extraction`: provides functions to extract the Crash Log record from the platform.
@@ -109,6 +117,8 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc;
 
+#[cfg(feature = "analysis")]
+pub mod analysis;
 mod bert;
 #[cfg(feature = "collateral_manager")]
 pub mod collateral;

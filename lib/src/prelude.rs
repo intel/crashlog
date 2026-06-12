@@ -3,6 +3,8 @@
 
 //! Convenience re-export of common structs
 
+#[cfg(feature = "analysis")]
+pub use crate::analysis::Analyzer;
 #[cfg(feature = "collateral_manager")]
 pub use crate::collateral::{CollateralManager, CollateralTree};
 pub use crate::crashlog::CrashLog;

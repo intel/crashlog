@@ -15,7 +15,7 @@ impl Record {
         &self,
         cm: &mut CollateralManager<T>,
     ) -> Result<Node, Error> {
-        let mut section = Node::section(self.header.record_type()?);
+        let mut section = Node::record(self.header.record_type()?);
 
         for subsection_name in ["thread", "core"] {
             let decode_def = format!("layout_{subsection_name}.csv");

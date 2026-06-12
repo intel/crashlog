@@ -84,3 +84,20 @@ pub fn info(input_path: &Path) -> Result<(), uefi::Error> {
     }
     Ok(())
 }
+
+pub fn triage(input_path: &Path) -> Result<(), uefi::Error> {
+    let crashlog = read_crashlog_from_file(input_path)?;
+
+    let nodes = match CollateralManager::embedded_tree() {
+        Ok(mut cm) => crashlog.decode(&mut cm),
+        Err(_) => crashlog.decode_without_cm(),
+    };
+
+    let tags = Analyzer::default().with_input(&nodes).analyze().tags;
+
+    for tag in tags {
+        println!("{}", tag);
+    }
+
+    Ok(())
+}

@@ -5,7 +5,7 @@
 
 #[cfg(feature = "collateral_manager")]
 use crate::collateral::{CollateralManager, CollateralTree, ItemPath, PVSS};
-use crate::errata::{Errata, SERVER_LEGACY_PRODUCT_IDS};
+use crate::errata::Errata;
 use crate::error::Error;
 use crate::node::Node;
 #[cfg(not(feature = "std"))]
@@ -278,7 +278,7 @@ impl Header {
     /// Returns the granularity of the record size fields in bytes
     #[inline]
     fn record_size_granularity(&self) -> usize {
-        if self.version.into_errata().core_record_size_bytes {
+        if self.version.errata().core_record_size_bytes {
             return 1;
         }
         4
@@ -550,19 +550,8 @@ impl Version {
         })
     }
 
-    pub fn into_errata(&self) -> Errata {
-        let type0_legacy_server =
-            self.header_type == 0 && SERVER_LEGACY_PRODUCT_IDS.contains(&self.product_id);
-        let type0_legacy_server_box = type0_legacy_server && self.record_type == 0x4;
-        let core_record_size_bytes = !type0_legacy_server
-            && ((self.record_type == record_types::ECORE && self.product_id < 0x96)
-                || (self.record_type == record_types::PCORE && self.product_id < 0x71));
-
-        Errata {
-            type0_legacy_server,
-            type0_legacy_server_box,
-            core_record_size_bytes,
-        }
+    pub fn errata(&self) -> Errata {
+        Errata::from_version(self)
     }
 }
 

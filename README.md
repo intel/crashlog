@@ -12,7 +12,7 @@ Modern Intel SoCs automatically record hardware state during fatal crashes
 
 Check if your system has crash log data:
 
-```
+```console
 $ iclg extract
 ```
 
@@ -24,13 +24,18 @@ Once extracted, you have several options depending on your needs:
   records into structured JSON format for initial triage and automated
   processing.
 
-  ```
-  $ iclg decode three_strike_timeout.crashlog | \
-    jq '.crashlog_data.pcore.core0.thread0.thread.arch_state.mca.bank3'
+  ```console
+  $ iclg triage three_strike_timeout_with_xq.crashlog
+  CORE_TIMEOUT.SINGLE_STUCK_TRANSACTION.13014002340H
+  MCA.BANK3.INTERNAL_TIMER_ERROR.MSCOD_E184H
+  RESET_CAUSE.GLOBAL_RESET.PMC_FW
+
+  $ iclg decode three_strike_timeout_with_xq.crashlog |
+  > jq '.crashlog_data.pcore.core0.thread0.thread.arch_state.mca.bank3'
   {
-    "addr": "0xfffff80577036530",
+    "addr": "0xfffff80252753e75",
     "ctl": "0x7f",
-    "misc": "0xfffff80577036530",
+    "misc": "0xfffff80252753e75",
     "status": "0xbe000000e1840400"
   }
   ```
@@ -95,7 +100,7 @@ as a standalone application or be integrated into other applications.
 
   Run the following command to install the CLI application:
 
-  ```
+  ```console
   $ cargo install --path app/
   ```
 
@@ -103,7 +108,7 @@ as a standalone application or be integrated into other applications.
 
   To uninstall the CLI application, use:
 
-  ```
+  ```console
   $ cargo uninstall -p intel_crashlog_app
   ```
 
@@ -117,13 +122,13 @@ as a standalone application or be integrated into other applications.
 
 - **Extract** the Crash Log from the Windows Event Log or Linux sysfs:
 
-```
+```console
 $ iclg extract sample.crashlog
 ```
 
 - **List** all the collected records:
 
-```
+```console
 $ iclg info sample.crashlog
   #   Record Type      Product  Size    Skt  Die
 ----- ---------------- -------- ------- ---- ---------
@@ -133,7 +138,7 @@ $ iclg info sample.crashlog
 
 - **Export** the Crash Log content into JSON:
 
-```
+```console
 $ iclg decode sample.crashlog
 {
     "crashlog_data": {
@@ -142,9 +147,9 @@ $ iclg decode sample.crashlog
 }
 ```
 
-- List available commands using the `--help` option:
+- **List** available commands using the `--help` option:
 
-```
+```console
 $ iclg --help
 Extract and decode Intel Crash Log records.
 
@@ -155,6 +160,7 @@ Commands:
   decode   Decode Crash Log records into JSON
   info     List the Crash Log records stored in the input file
   unpack   Unpack the Crash Log records stored in the input file
+  triage   Triage the Crash Log records stored in the input files
   help     Print this message or the help of the given subcommand(s)
 
 Options:

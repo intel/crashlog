@@ -10,12 +10,14 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = [
+    "analysis",
     "extraction",
     "embedded_collateral_tree",
     "fs_collateral_tree",
     "serialize",
     "std"
 ]
+analysis = []
 collateral_manager = [
     "dep:serde",
     "dep:serde_json"
