@@ -1,0 +1,55 @@
+# Copyright (C) 2026 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
+# udev rule to automatically extract Intel Crash Log data when a PMT device
+# completes a Crash Log collection.
+#
+# This rule file triggers when the `intel_pmt` subsystem signals that a crash
+# log collection has been completed and starts the `iclg-extract.sh` script to
+# extract the Crash Log data and store it in a directory.
+#
+# Installation (commands are run from the root of the repository):
+#   1. Install the iclg binary system-wide in /usr/local/bin/. udev requires an
+#      absolute path and does not use $PATH, and `cargo install` places the
+#      binary in ~/.cargo/bin/, which is not suitable for a rule run as root.
+#      Build it as a regular user and copy it with root ownership:
+#        cargo build --release --manifest-path app/Cargo.toml
+#        sudo install -m 755 app/target/release/iclg /usr/local/bin/iclg
+#      If iclg was already installed with `cargo install`, it can be copied
+#      directly instead:
+#        sudo install -m 755 ~/.cargo/bin/iclg /usr/local/bin/iclg
+#      Repeat this step after updating iclg, as the copy is not updated
+#      automatically. If the binary is installed elsewhere, update the ICLG
+#      variable in iclg-extract.sh.
+#   2. Create the output directory, which must exist before the rule runs:
+#        sudo mkdir -p /var/log/crashlog
+#      If a different directory is used, update the OUTPUT_PATH variable in
+#      iclg-extract.sh.
+#   3. Install the extraction script:
+#        sudo install -m 755 examples/udev/iclg-extract.sh /usr/local/bin/
+#      If the script is installed elsewhere, update its path in the RUN+= key
+#      below.
+#   4. Install this rules file:
+#        sudo install -m 644 examples/udev/99-iclg-crashlog.rules /etc/udev/rules.d/
+#   5. Reload udev rules:
+#        sudo udevadm control --reload-rules
+#
+# At the default log-level only failures of the script are logged, without its
+# output.
+#
+# Troubleshooting:
+#   udev only logs the output of the script at debug level. To see it,
+#   enable debug logging temporarily (it is reset on reboot):
+#     sudo udevadm control --log-level=debug
+#   Read the messages:
+#     journalctl -u systemd-udevd | grep iclg-extract
+#
+# Customization:
+#   - Edit iclg-extract.sh to script the full iclg flow. This may include
+#     rearming the Crash Log trigger of the device that just completed a
+#     Crash Log collection or any other control command in other PMT devices.
+
+SUBSYSTEM=="intel_pmt", KERNEL=="crashlog*", ACTION=="change", \
+    ENV{INTEL_PMT_CRASHLOG_EVENT}=="PRESENT", \
+    ENV{INTEL_PMT_CRASHLOG_COMPLETE}=="1", \
+    RUN+="/usr/local/bin/iclg-extract.sh %k"
