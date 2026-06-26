@@ -209,7 +209,11 @@ impl PmtSysFs {
         let mut crashlogs = Vec::new();
 
         for endpoint in self.get_endpoints(dev) {
-            crashlogs.push(endpoint.extract()?);
+            match endpoint.extract() {
+                Ok(crashlog) => crashlogs.push(crashlog),
+                Err(Error::EmptyRegion) => (),
+                Err(err) => return Err(err),
+            }
         }
 
         Ok(crashlogs)
