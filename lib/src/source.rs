@@ -158,11 +158,19 @@ impl CrashLogSource {
     /// Returns the Crash Log extracted from the platform using the current Crash Log source
     #[cfg(feature = "extraction")]
     pub fn extract(&self) -> Result<Vec<CrashLog>, Error> {
-        match self {
+        let mut crashlogs = match self {
             Self::Acpi => Acpi::default().extract().map(|crashlog| vec![crashlog]),
             Self::PmtDevice(dev) => Pmt::default().extract(dev),
             Self::EventLog => EventLog::default().extract(),
+        };
+
+        if let Ok(ref mut crashlogs) = crashlogs {
+            for crashlog in crashlogs.iter_mut() {
+                crashlog.metadata.source = Some(self.clone());
+            }
         }
+
+        crashlogs
     }
 
     /// Triggers an on-demand Crash Log collection on this source
