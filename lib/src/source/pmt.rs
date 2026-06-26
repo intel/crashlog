@@ -98,6 +98,19 @@ impl Pmt {
         Err(Error::Unsupported)
     }
 
+    #[cfg(target_os = "linux")]
+    pub fn clear(&self, dev: &PmtDeviceId) -> Result<(), Error> {
+        for endpoint in self.sysfs.get_endpoints(dev) {
+            endpoint.clear()?;
+        }
+        Ok(())
+    }
+
+    #[cfg(all(not(target_os = "linux"), feature = "control_commands"))]
+    pub fn clear(&self, _dev: &PmtDeviceId) -> Result<(), Error> {
+        Err(Error::Unsupported)
+    }
+
     #[cfg(all(target_os = "linux", feature = "control_commands"))]
     pub fn trigger(&self, dev: &PmtDeviceId) -> Result<(), Error> {
         for endpoint in self.sysfs.get_endpoints(dev) {

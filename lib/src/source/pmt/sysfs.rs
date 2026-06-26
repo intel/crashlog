@@ -248,6 +248,11 @@ impl PmtSysFsEndpoint {
     }
 
     #[cfg(feature = "control_commands")]
+    pub fn clear(&self) -> Result<(), Error> {
+        self.write_command("clear", b"1")
+    }
+
+    #[cfg(feature = "control_commands")]
     pub fn enable_disable(&self, enable: bool) -> Result<(), Error> {
         self.write_command("enable", if enable { b"1" } else { b"0" })
     }
@@ -283,6 +288,10 @@ impl PmtSysFsEndpoint {
 
         if self.path.join("enable").exists() {
             capabilities.insert(Capability::EnableDisable);
+        }
+
+        if self.path.join("clear").exists() {
+            capabilities.insert(Capability::Clear);
         }
 
         capabilities

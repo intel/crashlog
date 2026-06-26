@@ -7,6 +7,10 @@ pub fn trigger(sources: Vec<CrashLogSource>) -> Result<(), Error> {
     control_command(sources, CrashLogSource::trigger)
 }
 
+pub fn clear(sources: Vec<CrashLogSource>) -> Result<(), Error> {
+    control_command(sources, CrashLogSource::clear)
+}
+
 pub fn enable(sources: Vec<CrashLogSource>) -> Result<(), Error> {
     control_command(sources, CrashLogSource::enable)
 }

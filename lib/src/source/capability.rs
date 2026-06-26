@@ -15,6 +15,8 @@ pub enum Capability {
     Trigger,
     /// Enabling/Disabling of Crash Log collection flow
     EnableDisable,
+    /// Clearing of the Crash Log storage
+    Clear,
 }
 
 impl fmt::Display for Capability {
@@ -23,6 +25,7 @@ impl fmt::Display for Capability {
             Self::Extract => write!(f, "extract"),
             Self::Trigger => write!(f, "trigger"),
             Self::EnableDisable => write!(f, "enable/disable"),
+            Self::Clear => write!(f, "clear"),
         }
     }
 }

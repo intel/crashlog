@@ -182,6 +182,15 @@ impl CrashLogSource {
         }
     }
 
+    /// Clears the Crash Log storage on this source
+    #[cfg(feature = "control_commands")]
+    pub fn clear(&self) -> Result<(), Error> {
+        match self {
+            Self::PmtDevice(dev) => Pmt::default().clear(dev),
+            _ => Err(Error::Unsupported),
+        }
+    }
+
     /// Enable the Crash Log collection on this source
     #[cfg(feature = "control_commands")]
     pub fn enable(&self) -> Result<(), Error> {

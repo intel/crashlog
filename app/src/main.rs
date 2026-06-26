@@ -72,6 +72,11 @@ enum Command {
         #[arg(short, long, value_delimiter = ',')]
         sources: Vec<CrashLogSource>,
     },
+    /// Clear the Crash Log storages
+    Clear {
+        #[arg(short, long, value_delimiter = ',')]
+        sources: Vec<CrashLogSource>,
+    },
     /// Unpack the Crash Log records stored in the input file
     Unpack { input_files: Vec<PathBuf> },
     /// Triage the Crash Log records stored in the input files
@@ -96,6 +101,7 @@ impl Command {
             } => info::info(&cm, input_files, *format),
             Command::List => list::list(),
             Command::Trigger { sources } => control::trigger(sources.clone())?,
+            Command::Clear { sources } => control::clear(sources.clone())?,
             Command::Unpack { input_files } => {
                 for input_file in input_files {
                     if let Err(err) = unpack::unpack(input_file) {
