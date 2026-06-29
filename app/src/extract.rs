@@ -36,29 +36,44 @@ pub fn extract(output_path: Option<&Path>, sources: Vec<CrashLogSource>) {
         log::error!("{}", Error::NoCrashLogFound);
     }
 
-    for (i, crashlog) in result.iter().enumerate() {
-        let mut path = if let Some(output_path) = output_path {
-            let mut path = output_path.to_path_buf();
-            if output_path.is_dir() {
-                path.push(format!("{}.crashlog", crashlog.metadata))
+    for crashlog in result {
+        let mut idx = 0;
+
+        loop {
+            let filename = if idx > 0 {
+                format!("{}-{}.crashlog", crashlog.metadata, idx)
+            } else {
+                format!("{}.crashlog", crashlog.metadata)
+            };
+
+            let path = if let Some(output_path) = output_path {
+                let mut path = output_path.to_path_buf();
+                if output_path.is_dir() {
+                    path.push(filename);
+                }
+                path
+            } else {
+                PathBuf::from(filename)
+            };
+
+            if path.exists() {
+                if let Some(output_path) = output_path
+                    && output_path.is_file()
+                {
+                    log::error!("{}: file already exists.", path.display());
+                    break;
+                }
+
+                idx += 1;
+                continue;
             }
-            path
-        } else {
-            PathBuf::from(format!("{}.crashlog", crashlog.metadata))
-        };
 
-        if result.len() > 1
-            && let Some(filename) = path.file_stem()
-        {
-            path.set_file_name(format!(
-                "{}-{i}.crashlog",
-                PathBuf::from(filename).display()
-            ))
-        }
+            println!("{}", path.display());
+            if let Err(err) = std::fs::write(path, crashlog.to_bytes()) {
+                log::error!("Failed to write Crash Log file: {err}");
+            }
 
-        println!("{}", path.display());
-        if let Err(err) = std::fs::write(path, crashlog.to_bytes()) {
-            log::error!("Failed to write Crash Log file: {err}");
+            break;
         }
     }
 }
