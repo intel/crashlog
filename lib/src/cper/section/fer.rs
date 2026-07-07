@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: MIT
 
 #[cfg(not(feature = "std"))]
-use alloc::vec::Vec;
+use alloc::{fmt, vec::Vec};
+#[cfg(feature = "std")]
+use std::fmt;
 use uguid::Guid;
 
 use crate::region::Region;
@@ -32,6 +34,15 @@ pub struct FirmwareErrorRecordHeader {
 pub struct FirmwareErrorRecord {
     pub header: FirmwareErrorRecordHeader,
     pub payload: Vec<u8>,
+}
+
+impl fmt::Display for FirmwareErrorRecord {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.header.guid {
+            guids::RECORD_ID_CRASHLOG => write!(f, "Intel Crash Log Region"),
+            _ => write!(f, "{}", self.header.guid),
+        }
+    }
 }
 
 impl FirmwareErrorRecordHeader {

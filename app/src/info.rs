@@ -69,46 +69,32 @@ fn compact<T: CollateralTree>(cm: &CollateralManager<T>, input: &Path) -> Result
 
     table.render();
 
+    if !crashlog.metadata.extra_cper_sections.is_empty() {
+        println!();
+
+        let mut table = Table::from(["#", "CPER Section GUID", "Length", "Description"]);
+
+        for (i, section) in crashlog.metadata.extra_cper_sections.iter().enumerate() {
+            table.append_row(Row::from([
+                i.to_string(),
+                section.guid().to_string(),
+                section.len().to_string(),
+                section.to_string(),
+            ]));
+        }
+
+        table.render();
+    }
+
     Ok(())
 }
 
 fn markdown<T: CollateralTree>(cm: &CollateralManager<T>, input: &Path) -> Result<(), Error> {
     let crashlog = CrashLog::from_slice(&std::fs::read(input)?)?;
 
-    // Column widths
-    let region_idx_width = 8;
-    let record_idx_width = 8;
-    let record_type_width = 16;
-    let revision_width = 8;
-    let product_width = 14;
-    let size_width = 10;
-    let skt_width = 8;
-    let checksum_width = 12;
-    let die_width = 10;
+    println!("### Crash Log Records\n");
 
-    // Header
-    println!(
-        "| {1:<region_idx_width$} \
-         | {2:<record_idx_width$} \
-         | {3:<record_type_width$} \
-         | {4:<revision_width$} \
-         | {5:<product_width$} \
-         | {6:<size_width$} \
-         | {7:<skt_width$} \
-         | {8:<checksum_width$} \
-         | {9:<die_width$} \
-         |\n\
-         | {0:-<region_idx_width$} \
-         | {0:-<record_idx_width$} \
-         | {0:-<record_type_width$} \
-         | {0:-<revision_width$} \
-         | {0:-<product_width$} \
-         | {0:-<size_width$} \
-         | {0:-<skt_width$} \
-         | {0:-<checksum_width$} \
-         | {0:-<die_width$} \
-         |",
-        "",
+    let mut table = Table::from([
         "Region",
         "Record",
         "Record Type",
@@ -118,7 +104,7 @@ fn markdown<T: CollateralTree>(cm: &CollateralManager<T>, input: &Path) -> Resul
         "Socket",
         "Checksum",
         "Die",
-    );
+    ]);
 
     for (i, region) in crashlog.regions.iter().enumerate() {
         for (j, record) in region.records.iter().enumerate() {
@@ -137,7 +123,8 @@ fn markdown<T: CollateralTree>(cm: &CollateralManager<T>, input: &Path) -> Resul
 
             let checksum = record
                 .checksum()
-                .map_or("", |check| if check { "Valid" } else { "Invalid" });
+                .map_or("", |check| if check { "Valid" } else { "Invalid" })
+                .to_string();
 
             let die = if let Some(die_id) = record.header.die(cm) {
                 die_id
@@ -152,21 +139,39 @@ fn markdown<T: CollateralTree>(cm: &CollateralManager<T>, input: &Path) -> Resul
             let record_size = record.header.record_size();
             let socket_id = record.header.socket_id();
 
-            // Populate the table
-            println!(
-                "| {i:<region_idx_width$} \
-                 | {j:<record_idx_width$} \
-                 | {record_type:<record_type_width$} \
-                 | {revision:<revision_width$} \
-                 | {product:<product_width$} \
-                 | {record_size:<size_width$} \
-                 | {socket_id:<skt_width$} \
-                 | {checksum:<checksum_width$} \
-                 | {die:<die_width$} \
-                 |"
-            );
+            table.append_row(Row::from([
+                i.to_string(),
+                j.to_string(),
+                record_type,
+                revision.to_string(),
+                product,
+                record_size.to_string(),
+                socket_id.to_string(),
+                checksum,
+                die.to_string(),
+            ]));
         }
     }
+
+    table.render_markdown();
+
+    if !crashlog.metadata.extra_cper_sections.is_empty() {
+        println!("\n### Extra CPER Sections\n");
+
+        let mut table = Table::from(["#", "CPER Section GUID", "Length", "Description"]);
+
+        for (i, section) in crashlog.metadata.extra_cper_sections.iter().enumerate() {
+            table.append_row(Row::from([
+                i.to_string(),
+                section.guid().to_string(),
+                section.len().to_string(),
+                section.to_string(),
+            ]));
+        }
+
+        table.render_markdown();
+    }
+
     Ok(())
 }
 

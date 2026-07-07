@@ -4,7 +4,9 @@
 pub mod fer;
 
 #[cfg(not(feature = "std"))]
-use alloc::vec::Vec;
+use alloc::{fmt, vec::Vec};
+#[cfg(feature = "std")]
+use std::fmt;
 
 use super::descr::CperSectionDescriptor;
 use crate::region::Region;
@@ -60,6 +62,15 @@ impl CperSectionBody {
 
         debug_assert_eq!(bytes.len(), self.len());
         bytes
+    }
+}
+
+impl fmt::Display for CperSectionBody {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::FirmwareErrorRecord(fer) => write!(f, "Firmware Error Record - {fer}"),
+            Self::Unknown(_, _) => write!(f, "Unknown"),
+        }
     }
 }
 

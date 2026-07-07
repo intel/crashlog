@@ -107,4 +107,37 @@ impl Table {
             println!();
         }
     }
+
+    pub fn render_markdown(&self) {
+        print!("|");
+        for column in self.columns.iter() {
+            print!(" {:width$}|", column.title, width = column.width + 2);
+        }
+        println!();
+
+        print!("|");
+        for column in self.columns.iter() {
+            print!(" {:->width$}|", " ", width = column.width + 2);
+        }
+        println!();
+
+        for row in self.rows.iter() {
+            print!("|");
+            for (i, cell) in row.cells.iter().enumerate() {
+                let Some(column) = self.columns.get(i) else {
+                    break;
+                };
+
+                let width = column.width + 2;
+                print!(" ");
+                match column.alignment {
+                    Alignment::Left => print!("{:width$}", cell),
+                    Alignment::Right => print!("{:>width$} ", cell, width = width - 1),
+                    Alignment::Center => print!("{:^width$}", cell),
+                }
+                print!("|");
+            }
+            println!();
+        }
+    }
 }
