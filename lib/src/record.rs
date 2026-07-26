@@ -31,13 +31,14 @@ pub struct Context {
 impl Record {
     pub fn payload(&self) -> &[u8] {
         let begin = self.header.header_size();
-        let end = if self.header.version.cldic {
-            // Checksum is present at the end of the record
-            self.data.len() - 4
-        } else {
-            self.data.len()
-        };
-        &self.data[begin..end]
+
+        // The last DWORD of the record is reserved for the checksum when the CLDIC bit is set
+        let end = self
+            .data
+            .len()
+            .saturating_sub(if self.header.version.cldic { 4 } else { 0 });
+
+        self.data.get(begin..end).unwrap_or_default()
     }
 
     pub fn checksum(&self) -> Option<bool> {
@@ -52,5 +53,51 @@ impl Record {
             .fold(0, |acc: u32, dword| acc.wrapping_add(dword));
 
         Some(checksum == 0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::header::Version;
+
+    #[test]
+    fn payload() {
+        let record = Record {
+            data: (0..16).collect(),
+            ..Default::default()
+        };
+        assert_eq!(record.payload(), &[8, 9, 10, 11, 12, 13, 14, 15]);
+
+        let record_with_cldic = Record {
+            header: Header {
+                version: Version {
+                    cldic: true,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            data: (0..16).collect(),
+            ..Default::default()
+        };
+        assert_eq!(record_with_cldic.payload(), &[8, 9, 10, 11]);
+    }
+
+    #[test]
+    fn payload_with_invalid_header() {
+        let record = Record::default();
+        assert!(record.payload().is_empty());
+
+        let record_with_cldic = Record {
+            header: Header {
+                version: Version {
+                    cldic: true,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        assert!(record_with_cldic.payload().is_empty());
     }
 }
