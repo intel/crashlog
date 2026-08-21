@@ -112,6 +112,19 @@ impl Pmt {
     }
 
     #[cfg(all(target_os = "linux", feature = "control_commands"))]
+    pub fn rearm(&self, dev: &PmtDeviceId) -> Result<(), Error> {
+        for endpoint in self.sysfs.get_endpoints(dev) {
+            endpoint.rearm()?;
+        }
+        Ok(())
+    }
+
+    #[cfg(all(not(target_os = "linux"), feature = "control_commands"))]
+    pub fn rearm(&self, _dev: &PmtDeviceId) -> Result<(), Error> {
+        Err(Error::Unsupported)
+    }
+
+    #[cfg(all(target_os = "linux", feature = "control_commands"))]
     pub fn trigger(&self, dev: &PmtDeviceId) -> Result<(), Error> {
         for endpoint in self.sysfs.get_endpoints(dev) {
             endpoint.trigger()?;

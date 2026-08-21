@@ -182,6 +182,15 @@ impl CrashLogSource {
         }
     }
 
+    /// Rearms a Crash Log trigger on this source
+    #[cfg(feature = "control_commands")]
+    pub fn rearm(&self) -> Result<(), Error> {
+        match self {
+            Self::PmtDevice(dev) => Pmt::default().rearm(dev),
+            _ => Err(Error::Unsupported),
+        }
+    }
+
     /// Clears the Crash Log storage on this source
     #[cfg(feature = "control_commands")]
     pub fn clear(&self) -> Result<(), Error> {

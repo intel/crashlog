@@ -249,6 +249,11 @@ impl PmtSysFsEndpoint {
     }
 
     #[cfg(feature = "control_commands")]
+    pub fn rearm(&self) -> Result<(), Error> {
+        self.write_command("rearm", b"1")
+    }
+
+    #[cfg(feature = "control_commands")]
     pub fn clear(&self) -> Result<(), Error> {
         self.write_command("clear", b"1")
     }
@@ -293,6 +298,10 @@ impl PmtSysFsEndpoint {
 
         if self.path.join("clear").exists() {
             capabilities.insert(Capability::Clear);
+        }
+
+        if self.path.join("rearm").exists() {
+            capabilities.insert(Capability::Rearm);
         }
 
         capabilities
@@ -436,6 +445,21 @@ mod tests {
     }
 
     #[test]
+    fn rearm() {
+        let root = tempfile::tempdir().unwrap();
+
+        let dev = PmtSysFsEndpoint::new(root.path()).unwrap();
+        assert!(matches!(dev.rearm(), Err(Error::IOError(_))));
+
+        let mut path = root.path().to_owned();
+        path.push("rearm");
+        std::fs::write(&path, b"0").unwrap();
+
+        dev.rearm().unwrap();
+        assert_eq!(&std::fs::read_to_string(&path).unwrap(), "1");
+    }
+
+    #[test]
     fn enable_disable() {
         let root = tempfile::tempdir().unwrap();
 
@@ -475,13 +499,18 @@ mod tests {
         trigger_path.push("trigger");
         std::fs::create_dir(&trigger_path).unwrap();
 
+        let mut rearm_path = dev_path.to_owned();
+        rearm_path.push("rearm");
+        std::fs::create_dir(&rearm_path).unwrap();
+
         let devices = sysfs.discover();
         let dev = sysfs.get_endpoints(&devices[0]);
         let dev_capabilities = dev[0].capabilities();
 
-        assert_eq!(dev_capabilities.len(), 2);
+        assert_eq!(dev_capabilities.len(), 3);
         assert!(dev_capabilities.contains(&Capability::Extract));
         assert!(dev_capabilities.contains(&Capability::Trigger));
+        assert!(dev_capabilities.contains(&Capability::Rearm));
     }
 
     #[test]

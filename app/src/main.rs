@@ -67,6 +67,11 @@ enum Command {
     },
     /// List the Crash Log sources that are available in the platform with their capabilities
     List,
+    /// Rearm a Crash Log trigger in the platform
+    Rearm {
+        #[arg(short, long, value_delimiter = ',')]
+        sources: Vec<CrashLogSource>,
+    },
     /// Trigger an on-demand Crash Log collection in the platform
     Trigger {
         #[arg(short, long, value_delimiter = ',')]
@@ -100,6 +105,7 @@ impl Command {
                 format,
             } => info::info(&cm, input_files, *format),
             Command::List => list::list(),
+            Command::Rearm { sources } => control::rearm(sources.clone())?,
             Command::Trigger { sources } => control::trigger(sources.clone())?,
             Command::Clear { sources } => control::clear(sources.clone())?,
             Command::Unpack { input_files } => {

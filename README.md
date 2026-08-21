@@ -135,14 +135,15 @@ $ iclg extract -s acpi,pmt:crashlog0
 ```
 
 - **List** all available Crash Log sources in the platform. Each source
-supports different capabilities like `extract`, `trigger`, or `enable/disable`.
+supports different capabilities like `extract`, `trigger`, `enable/disable`,
+or `rearm`.
 
 ```console
 $ iclg list
 Source         Description             Capabilities
--------------  ----------------------  ---------------------------------
+-------------  ----------------------  ---------------------------------------
 acpi           ACPI BERT               extract
-pmt:crashlog0  PMT endpoint crashlog0  extract, trigger, enable/disable
+pmt:crashlog0  PMT endpoint crashlog0  extract, trigger, enable/disable, rearm
 ```
 
 - **Trigger** a Crash Log collection on-demand. Like the `extract` command,
@@ -151,6 +152,16 @@ command is only supported on Linux.
 
 ```console
 $ iclg trigger
+```
+
+- **Rearm** a Crash Log trigger. A source can trigger a Crash Log collection
+only once per reset cycle; after a collection has been captured, the source
+must be reset and rearmed before it will trigger again. Like the `trigger`
+command, you can specify individual sources or rearm all sources by default.
+This command is only supported on Linux.
+
+```console
+$ iclg rearm
 ```
 
 - **Enable** or **Disable** the Crash Log collection in the platform.
@@ -189,18 +200,19 @@ $ iclg decode sample.crashlog
 $ iclg --help
 Extract and decode Intel Crash Log records.
 
-Usage: iclg [OPTIONS] [COMMAND]
+Usage: iclg [OPTIONS] <COMMAND>
 
 Commands:
-  enable   Enable the Crash Log collection in the platform
+  enable   Enable Crash Log collection in the platform
   extract  Extract the Crash Log records from the platform
   decode   Decode Crash Log records into JSON
-  disable  Disable the Crash Log collection in the platform
+  disable  Disable Crash Log collection in the platform
   info     List the Crash Log records stored in the input file
-  list     List the Crash Log sources that are present in the platform
+  list     List the Crash Log sources that are available in the platform
+  rearm    Rearm a Crash Log trigger in the platform
+  trigger  Trigger an on-demand Crash Log collection in the platform
   unpack   Unpack the Crash Log records stored in the input file
   triage   Triage the Crash Log records stored in the input files
-  trigger  Trigger an on-demand collection of Crash Log in the platform
   help     Print this message or the help of the given subcommand(s)
 
 Options:

@@ -17,6 +17,8 @@ pub enum Capability {
     EnableDisable,
     /// Clearing of the Crash Log storage
     Clear,
+    /// Rearming of the Crash Log trigger
+    Rearm,
 }
 
 impl fmt::Display for Capability {
@@ -26,6 +28,7 @@ impl fmt::Display for Capability {
             Self::Trigger => write!(f, "trigger"),
             Self::EnableDisable => write!(f, "enable/disable"),
             Self::Clear => write!(f, "clear"),
+            Self::Rearm => write!(f, "rearm"),
         }
     }
 }

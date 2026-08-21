@@ -3,6 +3,10 @@
 
 use intel_crashlog::prelude::*;
 
+pub fn rearm(sources: Vec<CrashLogSource>) -> Result<(), Error> {
+    control_command(sources, CrashLogSource::rearm)
+}
+
 pub fn trigger(sources: Vec<CrashLogSource>) -> Result<(), Error> {
     control_command(sources, CrashLogSource::trigger)
 }
