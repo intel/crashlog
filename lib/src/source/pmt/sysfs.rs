@@ -8,6 +8,7 @@ use crate::error::Error;
 use crate::region::Region;
 use crate::source::{Capabilities, Capability};
 use std::collections::BTreeSet;
+#[cfg(feature = "control_commands")]
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
