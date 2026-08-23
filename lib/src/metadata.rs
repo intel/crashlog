@@ -14,7 +14,7 @@ use crate::cper::CperSectionBody;
 use crate::source::CrashLogSource;
 
 /// Crash Log Metadata
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Metadata {
     /// Name of the computer where the Crash Log has been extracted from.
     pub computer: Option<String>,
@@ -28,6 +28,7 @@ pub struct Metadata {
 }
 
 /// Crash Log Extraction Time
+#[derive(Clone)]
 pub struct Time {
     pub year: u16,
     pub month: u8,

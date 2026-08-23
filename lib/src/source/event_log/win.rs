@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: MIT
 
 use crate::CrashLog;
-use crate::metadata;
+use crate::metadata::{Metadata, Time};
 use std::alloc::{Layout, alloc, dealloc};
+use std::collections::{BTreeMap, HashMap};
 use std::ffi::c_void;
 use std::ops::{Deref, Drop};
 use std::path::Path;
@@ -138,30 +139,85 @@ fn evt_render_values(context: &EvtHandle, event: &EvtHandle) -> Result<Option<Ev
     Ok(None)
 }
 
-fn metadata_from_evt_values(
-    filetime: EVT_VARIANT,
-    computer: EVT_VARIANT,
-) -> Result<metadata::Metadata> {
-    let mut time = SYSTEMTIME::default();
-    unsafe {
-        let filetime = FILETIME {
-            dwHighDateTime: (filetime.Anonymous.FileTimeVal >> 32) as u32,
-            dwLowDateTime: (filetime.Anonymous.FileTimeVal & 0xFFFFFFFF) as u32,
-        };
-        FileTimeToSystemTime(&filetime as *const FILETIME, &mut time as *mut SYSTEMTIME)?
+#[derive(Default)]
+struct EvtRecord {
+    id: u32,
+    metadata: Metadata,
+    chunks: BTreeMap<u32, Vec<u8>>,
+}
+
+impl EvtRecord {
+    fn new(id: u32) -> Self {
+        Self {
+            id,
+            ..Default::default()
+        }
     }
 
-    Ok(metadata::Metadata {
-        time: Some(metadata::Time {
+    fn add_chunk(&mut self, seq_num: u32, chunk: &[u8]) {
+        if self.chunks.insert(seq_num, chunk.to_vec()).is_some() {
+            log::warn!(
+                "Chunk {seq_num} of the record {} is defined several times in the Event Log.",
+                self.id
+            );
+        }
+    }
+
+    fn set_time(&mut self, filetimeval: u64) {
+        let mut time = SYSTEMTIME::default();
+        let filetime = FILETIME {
+            dwHighDateTime: (filetimeval >> 32) as u32,
+            dwLowDateTime: (filetimeval & 0xFFFFFFFF) as u32,
+        };
+        let res = unsafe {
+            FileTimeToSystemTime(&filetime as *const FILETIME, &mut time as *mut SYSTEMTIME)
+        };
+
+        if let Err(err) = res {
+            log::warn!(
+                "Failed to convert filetime to system time for event record {}: {err}",
+                self.id
+            );
+            return;
+        }
+
+        self.metadata.time = Some(Time {
             year: time.wYear,
             month: time.wMonth as u8,
             day: time.wDay as u8,
             hour: time.wHour as u8,
             minute: time.wMinute as u8,
-        }),
-        computer: unsafe { computer.Anonymous.StringVal.to_string().ok() },
-        ..Default::default()
-    })
+        });
+    }
+
+    fn set_computer(&mut self, computer: PCWSTR) {
+        self.metadata.computer = unsafe { computer.to_string().ok() };
+    }
+
+    fn into_crashlog(self) -> Option<CrashLog> {
+        let mut binary = Vec::new();
+
+        for (i, (seq_num, chunk)) in self.chunks.into_iter().enumerate() {
+            if i as u32 != seq_num {
+                log::warn!(
+                    "Event record {} is incomplete. Chunk {i} is missing.",
+                    self.id
+                );
+                return None;
+            }
+
+            binary.extend(chunk);
+        }
+
+        let mut crashlog = CrashLog::from_slice(&binary)
+            .inspect_err(|err| {
+                log::warn!("Error while decoding Crash Log read from Event Logs: {err}")
+            })
+            .ok()?;
+
+        crashlog.metadata = self.metadata.clone();
+        Some(crashlog)
+    }
 }
 
 fn query_crashlogs(path: PCWSTR, query: PCWSTR, query_flags: u32) -> Result<Vec<CrashLog>> {
@@ -171,6 +227,8 @@ fn query_crashlogs(path: PCWSTR, query: PCWSTR, query_flags: u32) -> Result<Vec<
         EvtCreateRenderContext(
             Some(&[
                 w!("Event/EventData/Data[@Name=\"RawData\"]"),
+                w!("Event/EventData/Data[@Name=\"RecordId\"]"),
+                w!("Event/EventData/Data[@Name=\"SeqNum\"]"),
                 w!("Event/System/TimeCreated/@SystemTime"),
                 w!("Event/System/Computer"),
             ]),
@@ -179,35 +237,44 @@ fn query_crashlogs(path: PCWSTR, query: PCWSTR, query_flags: u32) -> Result<Vec<
         .map(EvtHandle)
     }?;
 
-    let mut crashlogs = Vec::new();
+    let mut records = HashMap::new();
 
     loop {
         let events = evt_next(&query_handle, 1)?;
-        if events.is_empty() {
+        let Some(event) = events.first() else {
             break;
-        }
+        };
+        let values = evt_render_values(&context, event)?;
 
-        let values = evt_render_values(&context, &events[0])?;
         if let Some(values) = values {
             let values = values.values();
 
+            // Extract all the rendered values
             let binary = unsafe {
                 slice::from_raw_parts::<u8>(values[0].Anonymous.BinaryVal, values[0].Count as usize)
             };
+            let record_id = unsafe { values[1].Anonymous.UInt32Val };
+            let seq_num = unsafe { values[2].Anonymous.UInt32Val };
+            let filetimeval = unsafe { values[3].Anonymous.FileTimeVal };
+            let computer = unsafe { values[4].Anonymous.StringVal };
 
-            match CrashLog::from_slice(binary) {
-                Ok(mut crashlog) => {
-                    crashlog.metadata = metadata_from_evt_values(values[1], values[2])?;
-                    crashlogs.push(crashlog)
-                }
-                Err(err) => {
-                    log::warn!("Error while decoding Crash Log read from Event Logs: {err}")
-                }
+            records.entry(record_id).or_insert_with(|| {
+                let mut record = EvtRecord::new(record_id);
+                record.set_time(filetimeval);
+                record.set_computer(computer);
+                record
+            });
+
+            if let Some(record) = records.get_mut(&record_id) {
+                record.add_chunk(seq_num, binary);
             }
         }
     }
 
-    Ok(crashlogs)
+    Ok(records
+        .into_values()
+        .filter_map(|record| record.into_crashlog())
+        .collect())
 }
 
 pub(super) fn extract_crashlogs(path: Option<&Path>) -> Result<Vec<CrashLog>> {
