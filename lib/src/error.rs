@@ -39,6 +39,9 @@ pub enum Error {
     IOError(io::Error),
     #[cfg(feature = "std")]
     OsStringError(std::ffi::OsString),
+    ControlCommandRejected,
+    CrashLogPending,
+    SourceBusy,
 }
 
 #[cfg(feature = "std")]
@@ -74,6 +77,9 @@ impl fmt::Display for Error {
             Error::IOError(err) => write!(f, "Encountered IO error: {err}"),
             #[cfg(feature = "std")]
             Error::OsStringError(s) => write!(f, "Cannot convert OS string: {s:?}"),
+            Error::ControlCommandRejected => write!(f, "Control command was rejected"),
+            Error::CrashLogPending => write!(f, "A Crash Log collection is already pending"),
+            Error::SourceBusy => write!(f, "Crash Log source is busy"),
         }
     }
 }

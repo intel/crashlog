@@ -272,13 +272,24 @@ impl PmtSysFsEndpoint {
             .truncate(true)
             .open(&path)
             .map_err(Error::IOError)
-            .inspect_err(|err| log::warn!("{}: {err}", path.display()))?;
+            .inspect_err(|err| log::info!("Failed to open {}: {err}", path.display()))?;
 
         file.write_all(value)
-            .map_err(Error::IOError)
-            .inspect_err(|err| log::warn!("Failed to write to {}: {err}", path.display()))?;
+            .map_err(Self::to_control_error)
+            .inspect_err(|err| log::info!("Failed to write to {}: {err}", path.display()))?;
 
         Ok(())
+    }
+
+    #[cfg(feature = "control_commands")]
+    fn to_control_error(err: std::io::Error) -> Error {
+        log::debug!("Error reported by the PmtSysFs: {err}");
+        match err.kind() {
+            std::io::ErrorKind::AlreadyExists => Error::CrashLogPending,
+            std::io::ErrorKind::ResourceBusy => Error::SourceBusy,
+            std::io::ErrorKind::InvalidInput => Error::ControlCommandRejected,
+            _ => Error::IOError(err),
+        }
     }
 
     pub fn capabilities(&self) -> Capabilities {

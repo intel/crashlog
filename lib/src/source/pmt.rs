@@ -16,6 +16,8 @@ use alloc::{
 use std::{collections::BTreeSet, fmt, str::FromStr};
 #[cfg(all(target_os = "linux", feature = "std"))]
 use sysfs::PmtSysFs;
+#[cfg(all(target_os = "linux", feature = "control_commands"))]
+use sysfs::PmtSysFsEndpoint;
 
 pub use bdf::PciBdf;
 
@@ -87,10 +89,7 @@ impl Pmt {
 
     #[cfg(all(target_os = "linux", feature = "control_commands"))]
     pub fn enable_disable(&self, dev: &PmtDeviceId, enable: bool) -> Result<(), Error> {
-        for endpoint in self.sysfs.get_endpoints(dev) {
-            endpoint.enable_disable(enable)?;
-        }
-        Ok(())
+        self.run_on_endpoints(dev, |endpoint| endpoint.enable_disable(enable))
     }
 
     #[cfg(all(not(target_os = "linux"), feature = "control_commands"))]
@@ -100,10 +99,7 @@ impl Pmt {
 
     #[cfg(all(target_os = "linux", feature = "control_commands"))]
     pub fn clear(&self, dev: &PmtDeviceId) -> Result<(), Error> {
-        for endpoint in self.sysfs.get_endpoints(dev) {
-            endpoint.clear()?;
-        }
-        Ok(())
+        self.run_on_endpoints(dev, |endpoint| endpoint.clear())
     }
 
     #[cfg(all(not(target_os = "linux"), feature = "control_commands"))]
@@ -113,10 +109,7 @@ impl Pmt {
 
     #[cfg(all(target_os = "linux", feature = "control_commands"))]
     pub fn rearm(&self, dev: &PmtDeviceId) -> Result<(), Error> {
-        for endpoint in self.sysfs.get_endpoints(dev) {
-            endpoint.rearm()?;
-        }
-        Ok(())
+        self.run_on_endpoints(dev, |endpoint| endpoint.rearm())
     }
 
     #[cfg(all(not(target_os = "linux"), feature = "control_commands"))]
@@ -126,15 +119,49 @@ impl Pmt {
 
     #[cfg(all(target_os = "linux", feature = "control_commands"))]
     pub fn trigger(&self, dev: &PmtDeviceId) -> Result<(), Error> {
-        for endpoint in self.sysfs.get_endpoints(dev) {
-            endpoint.trigger()?;
-        }
-        Ok(())
+        self.run_on_endpoints(dev, |endpoint| endpoint.trigger())
     }
 
     #[cfg(all(not(target_os = "linux"), feature = "control_commands"))]
     pub fn trigger(&self, _dev: &PmtDeviceId) -> Result<(), Error> {
         Err(Error::Unsupported)
+    }
+
+    #[cfg(all(target_os = "linux", feature = "control_commands"))]
+    fn run_on_endpoints<F>(&self, dev: &PmtDeviceId, command: F) -> Result<(), Error>
+    where
+        F: Fn(&PmtSysFsEndpoint) -> Result<(), Error>,
+    {
+        let endpoints = self.sysfs.get_endpoints(dev);
+        if endpoints.is_empty() {
+            return Err(Error::NoCrashLogSourceFound);
+        }
+
+        let mut cmd_success = false;
+        let mut first_error = None;
+
+        for endpoint in &endpoints {
+            match command(endpoint) {
+                Ok(()) => cmd_success = true,
+                Err(err) => {
+                    if first_error.is_none() {
+                        first_error = Some(err);
+                    }
+                }
+            }
+        }
+
+        if !cmd_success {
+            // Unreachable `unwrap_or`: `endpoints` is not empty and every failing endpoint
+            // records an error, so `first_error` is always set when no endpoint succeeded.
+            return Err(first_error.unwrap_or(Error::InternalError));
+        }
+
+        if let Some(err) = first_error {
+            log::warn!("Crash Log command failed on some endpoints: {err}");
+        }
+
+        Ok(())
     }
 
     pub fn description(&self, dev: &PmtDeviceId) -> String {
