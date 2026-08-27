@@ -29,6 +29,13 @@ pub struct Errata {
     /// The Crash Log headers have their sizes in DWORDs, but for some products that are using
     /// ECORE and PCORE Crash Log records, their sizes are written in bytes.
     pub core_record_size_bytes: bool,
+
+    /// Type0 legacy header
+    ///
+    /// Some Intel(R) products in the discrete GPU segment are using legacy Crash Log record
+    /// headers with type0, which has a different layout compared with the currently defined Type0
+    /// Header.
+    pub type0_legacy_gpu: bool,
 }
 
 const GNR_SP_PRODUCT_ID: u32 = 0x2f;
@@ -38,10 +45,25 @@ const CWF_SP_PRODUCT_ID: u32 = 0x8e;
 const SERVER_LEGACY_PRODUCT_IDS: [u32; 3] =
     [GNR_SP_PRODUCT_ID, SRF_SP_PRODUCT_ID, CWF_SP_PRODUCT_ID];
 
+const BMG_X3_PRODUCT_ID: u32 = 0x5d;
+const BMG_G31_PRODUCT_ID: u32 = 0x5e;
+const BMG_X2_PRODUCT_ID: u32 = 0x5f;
+const CRI_PRODUCT_ID: u32 = 0xb6;
+const GPU_LEGACY_PRODUCT_IDS: [u32; 4] = [
+    BMG_X3_PRODUCT_ID,
+    BMG_G31_PRODUCT_ID,
+    BMG_X2_PRODUCT_ID,
+    CRI_PRODUCT_ID,
+];
+
 impl Errata {
     pub fn from_version(version: &Version) -> Self {
         let type0_legacy_server =
             version.header_type == 0 && SERVER_LEGACY_PRODUCT_IDS.contains(&version.product_id);
+
+        let type0_legacy_gpu =
+            version.header_type == 0 && GPU_LEGACY_PRODUCT_IDS.contains(&version.product_id);
+
         let type0_legacy_server_box =
             type0_legacy_server && version.record_type == record_types::PCORE;
 
@@ -52,12 +74,14 @@ impl Errata {
             && (version.product_id < 0x71 || version.product_id == CGC_PRODUCT_ID);
 
         let core_record_size_bytes = !type0_legacy_server
+            && !type0_legacy_gpu
             && (ecore_record_with_size_in_bytes || pcore_record_with_size_in_bytes);
 
         Errata {
             type0_legacy_server,
             type0_legacy_server_box,
             core_record_size_bytes,
+            type0_legacy_gpu,
         }
     }
 }

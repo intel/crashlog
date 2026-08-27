@@ -89,6 +89,14 @@ pub enum HeaderType {
         completion_status: u32,
         collection_complete: bool,
     },
+
+    Type0LegacyGpu {
+        timestamp: u64,
+        agent_version: u32,
+        reason: u32,
+        completion_status: u32,
+        collection_complete: bool,
+    },
 }
 
 impl HeaderType {
@@ -218,6 +226,23 @@ impl HeaderType {
         })
     }
 
+    fn type0_legacy_gpu_from_slice(slice: &[u8]) -> Option<Self> {
+        let reason = u32::from_le_bytes(slice.get(4..8)?.try_into().ok()?);
+        let timestamp = u64::from_le_bytes(slice.get(8..16)?.try_into().ok()?);
+        let agent_version = u32::from_le_bytes(slice.get(20..24)?.try_into().ok()?);
+        let cs_data = u32::from_le_bytes(slice.get(28..32)?.try_into().ok()?);
+        let completion_status = cs_data & 0x7FFFFFFF;
+        let collection_complete = (cs_data >> 31) != 0;
+
+        Some(HeaderType::Type0LegacyGpu {
+            timestamp,
+            agent_version,
+            reason,
+            completion_status,
+            collection_complete,
+        })
+    }
+
     pub fn from_slice(header_type_value: u16, slice: &[u8]) -> Result<Self, Error> {
         match header_type_value {
             0 => Ok(HeaderType::Type0),
@@ -233,6 +258,10 @@ impl HeaderType {
 
     pub fn from_slice_type0_legacy_server(slice: &[u8]) -> Result<Self, Error> {
         Self::type0_legacy_server_from_slice(slice).ok_or(Error::InvalidHeader)
+    }
+
+    pub fn from_slice_type0_legacy_gpu(slice: &[u8]) -> Result<Self, Error> {
+        Self::type0_legacy_gpu_from_slice(slice).ok_or(Error::InvalidHeader)
     }
 }
 
@@ -256,14 +285,16 @@ impl Header {
         };
         let errata = Errata::from_version(&version);
 
-        let size = if errata.type0_legacy_server {
-            RecordSize::from_slice_type0_legacy_server(slice).ok_or(Error::InvalidHeader)?
+        let size = if errata.type0_legacy_server || errata.type0_legacy_gpu {
+            RecordSize::from_slice_type0_legacy(slice).ok_or(Error::InvalidHeader)?
         } else {
             RecordSize::from_slice(slice).ok_or(Error::InvalidHeader)?
         };
 
         let header_type = if errata.type0_legacy_server {
             HeaderType::from_slice_type0_legacy_server(slice)?
+        } else if errata.type0_legacy_gpu {
+            HeaderType::from_slice_type0_legacy_gpu(slice)?
         } else {
             HeaderType::from_slice(version.header_type, slice)?
         };
@@ -428,6 +459,7 @@ impl Header {
                 ..
             } => 28 + completion_status_size as usize * 4,
             HeaderType::Type0LegacyServer { .. } => 32,
+            HeaderType::Type0LegacyGpu { .. } => 32,
         }
     }
 
@@ -580,8 +612,8 @@ impl RecordSize {
         })
     }
 
-    /// Creates a [RecordSize] from the raw record of a server product with legacy header type0
-    pub fn from_slice_type0_legacy_server(slice: &[u8]) -> Option<Self> {
+    /// Creates a [RecordSize] from the raw record of a product with legacy header type0
+    pub fn from_slice_type0_legacy(slice: &[u8]) -> Option<Self> {
         Some(RecordSize {
             record_size: u16::from_le_bytes(slice.get(16..18)?.try_into().ok()?),
             extended_record_size: 0,
@@ -730,6 +762,22 @@ impl From<&Header> for Node {
                 node.add(Node::field("reason", reason as u64));
                 node.add(Node::field("die_id", die_id as u64));
                 node.add(Node::field("socket_id", socket_id as u64));
+                node.add(Node::field("completion_status", completion_status as u64));
+                node.add(Node::field(
+                    "record_collection_completed",
+                    collection_complete as u64,
+                ));
+            }
+            HeaderType::Type0LegacyGpu {
+                timestamp,
+                agent_version,
+                reason,
+                completion_status,
+                collection_complete,
+            } => {
+                node.add(Node::field("timestamp", timestamp));
+                node.add(Node::field("agent_version", agent_version as u64));
+                node.add(Node::field("reason", reason as u64));
                 node.add(Node::field("completion_status", completion_status as u64));
                 node.add(Node::field(
                     "record_collection_completed",

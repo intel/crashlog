@@ -240,7 +240,7 @@ fn box_header_type6() {
 #[test]
 fn header_type0_legacy_server() {
     let mut cm = CollateralManager::file_system_tree(Path::new(COLLATERAL_TREE_PATH)).unwrap();
-    let data = fs::read("tests/samples/legacy_type0.crashlog").unwrap();
+    let data = fs::read("tests/samples/legacy_type0_server.crashlog").unwrap();
 
     let crashlog = CrashLog::from_slice(&data).unwrap();
 
