@@ -5,7 +5,7 @@ use super::table::{Row, Table};
 use intel_crashlog::source::CrashLogSource;
 
 pub fn list() {
-    let sources = CrashLogSource::discover();
+    let sources = CrashLogSource::discover_all_sources();
 
     if sources.is_empty() {
         println!("No available Crash Log sources found.");
