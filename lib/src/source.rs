@@ -133,7 +133,28 @@ impl FromStr for CrashLogSource {
 
 impl CrashLogSource {
     /// Returns all the Crash Log sources that are available in the platform
+    #[deprecated(
+        since = "1.2.0",
+        note = "use `discover_all_sources` or `discover_distinct` instead"
+    )]
     pub fn discover() -> Vec<Self> {
+        Self::discover_sources()
+    }
+
+    /// Returns all the Crash Log sources that are available in the platform
+    pub fn discover_all_sources() -> Vec<Self> {
+        Self::discover_sources()
+    }
+
+    /// Returns all the Crash Log sources that are available in the platform without duplicates
+    pub fn discover_distinct() -> Vec<Self> {
+        Self::discover_sources()
+            .into_iter()
+            .filter(|src| !src.is_alias())
+            .collect()
+    }
+
+    fn discover_sources() -> Vec<Self> {
         let mut sources = Vec::new();
 
         if Acpi::default().is_available() {
@@ -153,6 +174,14 @@ impl CrashLogSource {
         sources.extend(pmt_devices);
 
         sources
+    }
+
+    /// Returns if the source is already an alias of another source in the system
+    fn is_alias(&self) -> bool {
+        match self {
+            Self::PmtDevice(dev) => dev.is_alias(),
+            _ => false,
+        }
     }
 
     /// Returns the Crash Log extracted from the platform using the current Crash Log source

@@ -171,3 +171,10 @@ impl Pmt {
         }
     }
 }
+
+impl PmtDeviceId {
+    /// Returns if the source is already an alias of another source in the system
+    pub(super) fn is_alias(&self) -> bool {
+        matches!(self, PmtDeviceId::Bdf(..))
+    }
+}
