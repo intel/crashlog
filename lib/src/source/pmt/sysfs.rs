@@ -5,6 +5,7 @@ use super::PmtDeviceId;
 use super::bdf::PciBdf;
 use crate::CrashLog;
 use crate::error::Error;
+use crate::metadata::Time;
 use crate::region::Region;
 use crate::source::{Capabilities, Capability};
 use std::collections::BTreeSet;
@@ -212,7 +213,10 @@ impl PmtSysFs {
 
         for endpoint in self.get_endpoints(dev) {
             match endpoint.extract() {
-                Ok(crashlog) => crashlogs.push(crashlog),
+                Ok(mut crashlog) => {
+                    crashlog.metadata.time = Time::now();
+                    crashlogs.push(crashlog);
+                }
                 Err(Error::EmptyRegion) => (),
                 Err(err) => return Err(err),
             }
@@ -340,7 +344,9 @@ impl CrashLog {
             .flat_map(|crashlog| crashlog.regions)
             .collect();
 
-        CrashLog::from_regions(regions)
+        let mut crashlog = CrashLog::from_regions(regions)?;
+        crashlog.metadata.time = Time::now();
+        Ok(crashlog)
     }
 }
 
