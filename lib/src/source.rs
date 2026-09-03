@@ -198,7 +198,6 @@ impl CrashLogSource {
                 crashlog.metadata.source = Some(self.clone());
             }
         }
-
         crashlogs
     }
 

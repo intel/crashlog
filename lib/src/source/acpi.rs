@@ -26,7 +26,7 @@ impl Acpi {
         #[cfg(target_os = "linux")]
         {
             match self.sysfs.extract() {
-                Ok(crashlogs) => return Ok(crashlogs),
+                Ok(crashlog) => return Ok(crashlog),
                 Err(err) => log::error!("Cannot extract Crash Log from ACPI sysfs: {err}"),
             }
         }

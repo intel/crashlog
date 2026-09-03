@@ -3,6 +3,8 @@
 
 //! Information extracted alongside the Crash Log records.
 
+mod time;
+
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 #[cfg(not(feature = "std"))]
@@ -12,6 +14,8 @@ use std::fmt;
 
 use crate::cper::CperSectionBody;
 use crate::source::CrashLogSource;
+
+pub use time::Time;
 
 /// Crash Log Metadata
 #[derive(Default, Clone)]
@@ -27,41 +31,29 @@ pub struct Metadata {
     pub extra_cper_sections: Vec<CperSectionBody>,
 }
 
-/// Crash Log Extraction Time
-#[derive(Clone)]
-pub struct Time {
-    pub year: u16,
-    pub month: u8,
-    pub day: u8,
-    pub hour: u8,
-    pub minute: u8,
-}
-
 impl fmt::Display for Metadata {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match (
-            self.computer.as_ref(),
-            self.source.as_ref(),
-            self.time.as_ref(),
-        ) {
-            (Some(computer), Some(source), Some(time)) => write!(f, "{computer}-{source}-{time}"),
-            (Some(computer), None, Some(time)) => write!(f, "{computer}-{time}"),
-            (None, None, Some(time)) => write!(f, "{time}"),
-            (None, Some(source), Some(time)) => write!(f, "{source}-{time}"),
-            (Some(computer), None, None) => write!(f, "{computer}"),
-            (Some(computer), Some(source), None) => write!(f, "{computer}-{source}"),
-            (None, Some(source), None) => write!(f, "{source}"),
-            (None, None, None) => write!(f, "unnamed"),
-        }
-    }
-}
+        let mut sep = "";
 
-impl fmt::Display for Time {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{:04}-{:02}-{:02}-{:02}-{:02}",
-            self.year, self.month, self.day, self.hour, self.minute
-        )
+        if let Some(computer) = &self.computer {
+            write!(f, "{computer}")?;
+            sep = "-";
+        }
+
+        if let Some(source) = &self.source {
+            write!(f, "{sep}{source}")?;
+            sep = "-";
+        }
+
+        if let Some(time) = &self.time {
+            write!(f, "{sep}{time}")?;
+            sep = "-";
+        }
+
+        if sep.is_empty() {
+            write!(f, "unnamed")?;
+        }
+
+        Ok(())
     }
 }

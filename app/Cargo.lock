@@ -177,6 +177,7 @@ version = "1.1.0"
 dependencies = [
  "acpi",
  "cargo-emit",
+ "jiff",
  "log",
  "serde",
  "serde_json",
@@ -220,6 +221,7 @@ dependencies = [
  "portable-atomic",
  "portable-atomic-util",
  "serde_core",
+ "windows-link",
 ]
 
 [[package]]

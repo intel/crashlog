@@ -4,6 +4,7 @@
 use crate::CrashLog;
 use crate::bert::Berr;
 use crate::error::Error;
+use crate::metadata::Time;
 use std::path::{Path, PathBuf};
 
 pub(super) struct AcpiSysFs {
@@ -54,7 +55,9 @@ impl AcpiSysFs {
                 Berr::from_slice(&berr).ok_or(Error::InvalidBootErrorRecordRegion)
             })?;
 
-        CrashLog::from_berr(berr)
+        let mut crashlog = CrashLog::from_berr(berr)?;
+        crashlog.metadata.time = Time::now();
+        Ok(crashlog)
     }
 }
 
@@ -92,7 +95,10 @@ mod tests {
         let berr = Berr::from_crashlog(&crashlog);
         std::fs::write(berr_path, berr.to_bytes()).unwrap();
 
-        let extracted_crashlog = acpi.extract().unwrap();
+        let mut extracted_crashlog = acpi.extract().unwrap();
+        assert!(extracted_crashlog.metadata.time.is_some());
+
+        extracted_crashlog.metadata.time = None;
 
         assert_eq!(crashlog.to_bytes(), extracted_crashlog.to_bytes());
     }
