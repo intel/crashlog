@@ -33,6 +33,8 @@ mod pmt;
 
 use crate::CrashLog;
 use crate::error::Error;
+#[cfg(feature = "extraction")]
+use crate::metadata::Time;
 use acpi::Acpi;
 #[cfg(not(feature = "std"))]
 use alloc::{fmt, str::FromStr, string::String, string::ToString, vec, vec::Vec};
@@ -167,9 +169,14 @@ impl CrashLogSource {
         if let Ok(ref mut crashlogs) = crashlogs {
             for crashlog in crashlogs.iter_mut() {
                 crashlog.metadata.source = Some(self.clone());
+
+                // Event log records already carry the time when the record was extracted; only
+                // fall back when the source extraction didn't include any time
+                if crashlog.metadata.time.is_none() {
+                    crashlog.metadata.time = Time::now();
+                }
             }
         }
-
         crashlogs
     }
 

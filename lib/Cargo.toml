@@ -47,7 +47,11 @@ serialize = [
     "dep:serde_json",
 ]
 std = [
-    "serde/std"
+    "serde/std",
+    "dep:jiff",
+    "jiff/std",
+    "jiff/tz-system",
+    "jiff/tzdb-zoneinfo",
 ]
 
 [dev-dependencies]
@@ -63,6 +67,12 @@ log = "0.4"
 [dependencies.acpi]
 version = "5"
 default-features = false
+
+[dependencies.jiff]
+version = "0.2"
+default-features = false
+features = ["alloc"]
+optional = true
 
 [dependencies.serde]
 version = "1"
