@@ -82,16 +82,7 @@ pub(super) fn extract_crashlog() -> Result<CrashLog, Error> {
 
     crashlog.metadata = metadata::Metadata {
         computer: Some("efi".to_string()),
-        time: uefi::runtime::get_time()
-            .map(|time| metadata::Time {
-                year: time.year(),
-                month: time.month(),
-                day: time.day(),
-                hour: time.hour(),
-                minute: time.minute(),
-            })
-            .inspect_err(|err| log::warn!("Cannot get time: {err}"))
-            .ok(),
+        time: metadata::Time::now(),
         ..Default::default()
     };
 
