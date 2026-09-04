@@ -132,6 +132,7 @@ impl PmtSysFs {
     pub fn get_all_endpoints(&self) -> Vec<PmtSysFsEndpoint> {
         self.discover()
             .into_iter()
+            .filter(|dev| !dev.is_alias())
             .flat_map(|devid| self.get_endpoints(&devid))
             .collect()
     }
