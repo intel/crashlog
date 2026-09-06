@@ -196,6 +196,7 @@ impl CrashLogSource {
     pub fn clear(&self) -> Result<(), Error> {
         match self {
             Self::PmtDevice(dev) => Pmt::default().clear(dev),
+            Self::EventLog => EventLog::default().clear(),
             _ => Err(Error::Unsupported),
         }
     }
@@ -231,7 +232,7 @@ impl CrashLogSource {
     pub fn capabilities(&self) -> Capabilities {
         match self {
             Self::Acpi => Capabilities::from([Capability::Extract]),
-            Self::EventLog => Capabilities::from([Capability::Extract]),
+            Self::EventLog => Capabilities::from([Capability::Extract, Capability::Clear]),
             Self::PmtDevice(dev) => Pmt::default().capabilities(dev),
         }
     }
