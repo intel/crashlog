@@ -311,3 +311,13 @@ pub(super) fn extract_crashlogs(path: Option<&Path>) -> Result<Vec<CrashLog>> {
     crashlogs.append(&mut system_crashlogs);
     Ok(crashlogs)
 }
+
+#[cfg(feature = "control_commands")]
+pub(super) fn clear_whea_errors() -> Result<()> {
+    // Clear the dedicated WHEA/Errors channel
+    unsafe {
+        EvtClearLog(None, w!("Microsoft-Windows-Kernel-WHEA/Errors"), None, 0)?;
+    }
+
+    Ok(())
+}

@@ -40,6 +40,19 @@ impl EventLog {
 
         Err(Error::NoCrashLogFound)
     }
+
+    #[cfg(feature = "control_commands")]
+    pub fn clear(&self) -> Result<(), Error> {
+        #[cfg(all(target_family = "windows", feature = "std"))]
+        {
+            match win::clear_whea_errors() {
+                Ok(_) => return Ok(()),
+                Err(err) => log::error!("Cannot clear event log: {err}"),
+            }
+        }
+
+        Err(Error::Unsupported)
+    }
 }
 
 impl CrashLog {
