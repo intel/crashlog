@@ -24,8 +24,11 @@ pub struct Metadata {
     pub computer: Option<String>,
     /// Name of the source where the Crash Log has been extracted from.
     pub source: Option<CrashLogSource>,
-    /// Time of the extraction
+    /// Time of the extraction, expressed in UTC
     pub time: Option<Time>,
+    /// Types of the records found in the Crash Log (e.g. "Punit", "MCA"...), listed in the order
+    /// they were first found and without duplicates. Box records are not listed.
+    pub record_types: Vec<&'static str>,
     /// When the Crash Log is extracted from a CPER, this field stores the extra CPER sections that
     /// could be read from the CPER structure.
     pub extra_cper_sections: Vec<CperSectionBody>,
@@ -50,10 +53,38 @@ impl fmt::Display for Metadata {
             sep = "-";
         }
 
+        if !self.record_types.is_empty() {
+            write!(f, "{sep}{}", self.record_types.join("+"))?;
+            sep = "-";
+        }
+
         if sep.is_empty() {
             write!(f, "unnamed")?;
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn display_with_record_types_and_time() {
+        let metadata = Metadata {
+            record_types: vec!["Punit", "MCA"],
+            time: Some(Time {
+                year: 2026,
+                month: 1,
+                day: 2,
+                hour: 3,
+                minute: 4,
+                second: 5,
+                millisecond: 6,
+            }),
+            ..Metadata::default()
+        };
+        assert_eq!(metadata.to_string(), "20260102T030405.006Z-Punit+MCA");
     }
 }

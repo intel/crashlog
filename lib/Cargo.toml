@@ -68,11 +68,7 @@ default-features = false
 [dependencies.jiff]
 version = "0.2"
 default-features = false
-features = [
-    "std",
-    "tz-system",
-    "tzdb-zoneinfo",
-]
+features = ["std"]
 optional = true
 
 [dependencies.serde]

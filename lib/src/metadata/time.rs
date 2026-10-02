@@ -6,7 +6,7 @@ use alloc::fmt;
 #[cfg(feature = "std")]
 use std::fmt;
 
-/// Crash Log Extraction Time, expressed in the local time of the system
+/// Crash Log Extraction Time, expressed in UTC when read with [`Time::now`] on std targets
 #[derive(Clone)]
 pub struct Time {
     pub year: u16,
@@ -22,7 +22,7 @@ impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{:04}{:02}{:02}T{:02}{:02}{:02}.{:03}",
+            "{:04}{:02}{:02}T{:02}{:02}{:02}.{:03}Z",
             self.year, self.month, self.day, self.hour, self.minute, self.second, self.millisecond,
         )
     }
@@ -34,19 +34,13 @@ impl Time {
     /// The time is read from the operating system
     #[cfg(feature = "std")]
     pub fn now() -> Option<Self> {
-        use jiff::{Timestamp, tz};
+        use jiff::{Timestamp, tz::TimeZone};
 
         let now = Timestamp::try_from(std::time::SystemTime::now())
             .inspect_err(|err| log::info!("Cannot get the current time: {err}"))
             .ok()?;
 
-        let tz = tz::TimeZone::system();
-
-        if tz == tz::TimeZone::unknown() {
-            log::warn!("Cannot determine the system time zone");
-        }
-
-        let local = now.to_zoned(tz).datetime();
+        let local = now.to_zoned(TimeZone::UTC).datetime();
         Some(Time {
             year: local.year() as u16,
             month: local.month() as u8,
