@@ -5,15 +5,13 @@ mod bdf;
 #[cfg(all(target_os = "linux", feature = "std"))]
 mod sysfs;
 
-use super::capability::Capability;
 use crate::CrashLog;
 use crate::error::Error;
+use crate::source::Capabilities;
 #[cfg(not(feature = "std"))]
-use alloc::{
-    collections::BTreeSet, fmt, format, str::FromStr, string::String, string::ToString, vec::Vec,
-};
+use alloc::{fmt, format, str::FromStr, string::String, string::ToString, vec::Vec};
 #[cfg(feature = "std")]
-use std::{collections::BTreeSet, fmt, str::FromStr};
+use std::{fmt, str::FromStr};
 #[cfg(all(target_os = "linux", feature = "std"))]
 use sysfs::PmtSysFs;
 #[cfg(all(target_os = "linux", feature = "control_commands"))]
@@ -78,13 +76,13 @@ impl Pmt {
     }
 
     #[cfg(target_os = "linux")]
-    pub fn capabilities(&self, dev: &PmtDeviceId) -> BTreeSet<Capability> {
+    pub fn capabilities(&self, dev: &PmtDeviceId) -> Capabilities {
         self.sysfs.capabilities(dev)
     }
 
     #[cfg(not(target_os = "linux"))]
-    pub fn capabilities(&self, _dev: &PmtDeviceId) -> BTreeSet<Capability> {
-        BTreeSet::default()
+    pub fn capabilities(&self, _dev: &PmtDeviceId) -> Capabilities {
+        Capabilities::new()
     }
 
     #[cfg(all(target_os = "linux", feature = "control_commands"))]
