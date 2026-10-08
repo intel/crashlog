@@ -217,7 +217,10 @@ impl EvtRecord {
             })
             .ok()?;
 
-        crashlog.metadata = self.metadata.clone();
+        crashlog.metadata = Metadata {
+            record_types: core::mem::take(&mut crashlog.metadata.record_types),
+            ..self.metadata.clone()
+        };
         Some(crashlog)
     }
 }
