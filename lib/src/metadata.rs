@@ -15,7 +15,7 @@ use std::fmt;
 use crate::cper::CperSectionBody;
 use crate::source::CrashLogSource;
 
-pub use time::Time;
+pub use time::{Time, TimeZone};
 
 /// Crash Log Metadata
 #[derive(Default, Clone)]

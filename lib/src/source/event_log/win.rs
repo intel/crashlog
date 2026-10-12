@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::CrashLog;
-use crate::metadata::{Metadata, Time};
+use crate::metadata::{Metadata, Time, TimeZone};
 use std::alloc::{Layout, alloc, dealloc};
 use std::collections::{BTreeMap, HashMap};
 use std::ffi::c_void;
@@ -189,6 +189,7 @@ impl EvtRecord {
             minute: time.wMinute as u8,
             second: time.wSecond as u8,
             millisecond: time.wMilliseconds,
+            time_zone: TimeZone::Utc,
         });
     }
 
