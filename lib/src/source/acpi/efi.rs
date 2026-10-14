@@ -83,6 +83,7 @@ pub(super) fn extract_crashlog() -> Result<CrashLog, Error> {
     crashlog.metadata = metadata::Metadata {
         computer: Some("efi".to_string()),
         time: metadata::Time::now(),
+        record_types: core::mem::take(&mut crashlog.metadata.record_types),
         ..Default::default()
     };
 

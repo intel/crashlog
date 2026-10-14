@@ -6,6 +6,7 @@ use crate::bert::{Berr, Bert};
 #[cfg(feature = "collateral_manager")]
 use crate::collateral::{CollateralManager, CollateralTree};
 use crate::cper::{Cper, CperSectionBody};
+use crate::header::record_types;
 use crate::metadata::Metadata;
 use crate::node::Node;
 use crate::region::Region;
@@ -27,8 +28,21 @@ impl CrashLog {
     pub(crate) fn from_regions(regions: Vec<Region>) -> Result<Self, Error> {
         let mut queue = VecDeque::from(regions);
         let mut regions = Vec::new();
+        let mut metadata = Metadata::default();
 
         while let Some(region) = queue.pop_front() {
+            for record in region.records.iter() {
+                let is_box = record.header.version.record_type == record_types::BOX
+                    || record.header.version.errata().type0_legacy_server_box;
+
+                if !is_box
+                    && let Ok(record_type) = record.header.record_type()
+                    && !metadata.record_types.contains(&record_type)
+                {
+                    metadata.record_types.push(record_type);
+                }
+            }
+
             for child in region.get_children() {
                 queue.push_back(child);
             }
@@ -39,10 +53,7 @@ impl CrashLog {
             return Err(Error::InvalidCrashLog);
         }
 
-        Ok(CrashLog {
-            regions,
-            ..CrashLog::default()
-        })
+        Ok(CrashLog { regions, metadata })
     }
 
     /// Extracts the Crash Log records from [Berr].
