@@ -8,6 +8,7 @@ mod sysfs;
 use crate::CrashLog;
 use crate::error::Error;
 use crate::source::Capabilities;
+use crate::source::Guids;
 #[cfg(not(feature = "std"))]
 use alloc::{fmt, format, str::FromStr, string::String, string::ToString, vec::Vec};
 #[cfg(feature = "std")]
@@ -167,6 +168,16 @@ impl Pmt {
             PmtDeviceId::Name(name) => format!("PMT endpoint ({name})"),
             PmtDeviceId::Bdf(bdf) => format!("PMT endpoints for PCI device {bdf}"),
         }
+    }
+
+    #[cfg(target_os = "linux")]
+    pub fn guids(&self, dev: &PmtDeviceId) -> Guids {
+        self.sysfs.guids(dev)
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    pub fn guids(&self, _dev: &PmtDeviceId) -> Guids {
+        Guids::new()
     }
 }
 

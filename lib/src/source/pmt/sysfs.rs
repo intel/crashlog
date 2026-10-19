@@ -8,6 +8,7 @@ use crate::error::Error;
 use crate::metadata::Time;
 use crate::region::Region;
 use crate::source::{Capabilities, Capability};
+use crate::source::{Guid, Guids};
 use std::collections::BTreeSet;
 #[cfg(feature = "control_commands")]
 use std::io::Write;
@@ -234,6 +235,13 @@ impl PmtSysFs {
 
         capabilities
     }
+
+    pub fn guids(&self, dev: &PmtDeviceId) -> Guids {
+        self.get_endpoints(dev)
+            .into_iter()
+            .filter_map(|endpoint| endpoint.guid())
+            .collect()
+    }
 }
 
 impl PmtSysFsEndpoint {
@@ -331,6 +339,21 @@ impl PmtSysFsEndpoint {
                 .inspect(|_| log::info!("Extracted valid record from {}", self.path.display()))
                 .inspect_err(|err| log::error!("{}: {err}", self.path.display()))?,
         ])
+    }
+
+    fn guid(&self) -> Option<Guid> {
+        let path = self.path.join("guid");
+
+        std::fs::read_to_string(&path)
+            .map_err(Error::IOError)
+            .and_then(|guid| {
+                let text = guid.trim();
+                let hex = text.strip_prefix("0x").unwrap_or(text);
+                u32::from_str_radix(hex, 16).map_err(Error::ParseIntError)
+            })
+            .inspect_err(|err| log::warn!("Cannot read GUID from {}: {err}", path.display()))
+            .map(Guid::new)
+            .ok()
     }
 }
 
@@ -564,5 +587,33 @@ mod tests {
 
         dev[0].enable_disable(false).unwrap();
         assert_eq!(&std::fs::read_to_string(&enable_path).unwrap(), "0");
+    }
+
+    #[test]
+    fn pmt_guid() {
+        let root = tempfile::tempdir().unwrap();
+
+        let sysfs = PmtSysFs::new(root.path());
+        assert!(sysfs.discover().is_empty());
+
+        let mut dev_path = root.path().to_owned();
+        dev_path.push("sys");
+        dev_path.push("class");
+        dev_path.push("intel_pmt");
+        dev_path.push("crashlog0");
+        std::fs::create_dir_all(&dev_path).unwrap();
+
+        let mut guid_path = dev_path.to_owned();
+        guid_path.push("guid");
+        std::fs::write(&guid_path, b"0xd6d3e2\n").unwrap();
+
+        let devices = sysfs.discover();
+
+        let dev = sysfs.get_endpoints(&devices[0]);
+        let guid = dev[0].guid().unwrap();
+        assert_eq!(guid, Guid::new(0x00d6d3e2));
+
+        let guids = sysfs.guids(&devices[0]);
+        assert!(guids.contains(&Guid::new(0x00d6d3e2)));
     }
 }
