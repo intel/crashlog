@@ -29,6 +29,7 @@
 mod acpi;
 mod capability;
 mod event_log;
+mod guid;
 mod pmt;
 
 use crate::CrashLog;
@@ -42,6 +43,7 @@ use pmt::{Pmt, PmtDeviceId};
 use std::{fmt, str::FromStr};
 
 pub use capability::{Capabilities, Capability};
+pub use guid::{Guid, Guids};
 
 /// Represents a source from which Crash Log data can be extracted
 ///
@@ -262,6 +264,14 @@ impl CrashLogSource {
             Self::Acpi => Capabilities::from([Capability::Extract]),
             Self::EventLog => Capabilities::from([Capability::Extract, Capability::Clear]),
             Self::PmtDevice(dev) => Pmt::default().capabilities(dev),
+        }
+    }
+
+    /// Returns GUIDs of the Crash Log source
+    pub fn guids(&self) -> Guids {
+        match self {
+            Self::PmtDevice(dev) => Pmt::default().guids(dev),
+            _ => Guids::new(),
         }
     }
 }
