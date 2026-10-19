@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 mod bdf;
+mod guid;
 #[cfg(all(target_os = "linux", feature = "std"))]
 mod sysfs;
 
@@ -9,15 +10,18 @@ use crate::CrashLog;
 use crate::error::Error;
 use crate::source::Capabilities;
 #[cfg(not(feature = "std"))]
-use alloc::{fmt, format, str::FromStr, string::String, string::ToString, vec::Vec};
+use alloc::{
+    collections::BTreeSet, fmt, format, str::FromStr, string::String, string::ToString, vec::Vec,
+};
 #[cfg(feature = "std")]
-use std::{fmt, str::FromStr};
+use std::{collections::BTreeSet, fmt, str::FromStr};
 #[cfg(all(target_os = "linux", feature = "std"))]
 use sysfs::PmtSysFs;
 #[cfg(all(target_os = "linux", feature = "control_commands"))]
 use sysfs::PmtSysFsEndpoint;
 
 pub use bdf::PciBdf;
+pub use guid::PmtGuid;
 
 #[derive(Debug, Clone, Eq, Ord, PartialEq, PartialOrd)]
 pub enum PmtDeviceId {
@@ -167,6 +171,17 @@ impl Pmt {
             PmtDeviceId::Name(name) => format!("PMT endpoint ({name})"),
             PmtDeviceId::Bdf(bdf) => format!("PMT endpoints for PCI device {bdf}"),
         }
+    }
+
+    #[cfg(target_os = "linux")]
+    pub fn guids(&self, dev: &PmtDeviceId) -> Option<BTreeSet<PmtGuid>> {
+        let guids = self.sysfs.guids(dev);
+        (!guids.is_empty()).then_some(guids)
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    pub fn guids(&self, _dev: &PmtDeviceId) -> Option<BTreeSet<PmtGuid>> {
+        None
     }
 }
 
