@@ -35,13 +35,16 @@ use crate::CrashLog;
 use crate::error::Error;
 use acpi::Acpi;
 #[cfg(not(feature = "std"))]
-use alloc::{fmt, str::FromStr, string::String, string::ToString, vec, vec::Vec};
+use alloc::{
+    collections::BTreeSet, fmt, str::FromStr, string::String, string::ToString, vec, vec::Vec,
+};
 use event_log::EventLog;
 use pmt::{Pmt, PmtDeviceId};
 #[cfg(feature = "std")]
-use std::{fmt, str::FromStr};
+use std::{collections::BTreeSet, fmt, str::FromStr};
 
 pub use capability::{Capabilities, Capability};
+pub use pmt::PmtGuid;
 
 /// Represents a source from which Crash Log data can be extracted
 ///
@@ -92,6 +95,43 @@ impl fmt::Display for ParseCrashLogSourceError {
             Self::InvalidSource => write!(f, "Invalid source"),
             Self::InvalidParameter => write!(f, "Invalid parameter"),
         }
+    }
+}
+
+/// Properties of the Crash Log source
+///
+/// # Display
+///
+/// - `Pmt`: the endpoint PMT GUIDs in ascending numeric order, joined with `+`.
+///   Each PMT GUID is shown by name if known, otherwise as `0x` followed by 8 hex digits:
+///
+/// ```text
+/// BMG_X2_PUNIT+BMG_X2_OOBMSM
+/// 0x00D6D3E2+BMG_G31_PUNIT
+/// ```
+#[derive(Debug, Clone, Eq, Ord, PartialEq, PartialOrd)]
+#[non_exhaustive]
+pub enum SourceProperties {
+    /// Intel PMT Device properties
+    #[non_exhaustive]
+    Pmt {
+        /// GUIDs of the PMT Crash Log endpoints
+        guids: BTreeSet<PmtGuid>,
+    },
+}
+
+impl fmt::Display for SourceProperties {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Pmt { guids } => {
+                let mut guid_sep = "";
+                for guid in guids {
+                    write!(f, "{guid_sep}{guid}")?;
+                    guid_sep = "+";
+                }
+            }
+        }
+        Ok(())
     }
 }
 
@@ -262,6 +302,19 @@ impl CrashLogSource {
             Self::Acpi => Capabilities::from([Capability::Extract]),
             Self::EventLog => Capabilities::from([Capability::Extract, Capability::Clear]),
             Self::PmtDevice(dev) => Pmt::default().capabilities(dev),
+        }
+    }
+
+    /// Returns the properties of the Crash Log source
+    ///
+    /// Returns [None] on non-PMT Crash Log sources, on non-Linux, or when no GUID could be read
+    pub fn properties(&self) -> Option<SourceProperties> {
+        match self {
+            Self::PmtDevice(dev) => {
+                let guids = Pmt::default().guids(dev)?;
+                Some(SourceProperties::Pmt { guids })
+            }
+            _ => None,
         }
     }
 }
