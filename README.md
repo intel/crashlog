@@ -42,6 +42,9 @@ Once extracted, you have several options depending on your needs:
 
 - Send the Crash Log to your Intel representative for further support.
 
+- Upload the Crash Log to the [Intel Platform Diagnostics](https://platformdiagnostics.intel.com/)
+  web portal for analysis (requires NDA).
+
 - For advanced analysis, the [Intel System Debugger](https://www.intel.com/content/www/us/en/developer/tools/oneapi/system-bring-up-toolkit.html)
   provides additional debugging capabilities (requires NDA).
 
