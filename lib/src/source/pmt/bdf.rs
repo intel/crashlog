@@ -5,7 +5,7 @@
 use std::{fmt, str::FromStr};
 
 #[cfg(not(feature = "std"))]
-use alloc::{fmt, str::FromStr, vec::Vec};
+use alloc::{fmt, format, str::FromStr, string::String, vec::Vec};
 
 #[derive(Debug, Clone, Eq, Ord, PartialEq, PartialOrd)]
 pub struct PciBdf {
@@ -47,6 +47,13 @@ impl PciBdf {
             device,
             function,
         })
+    }
+
+    pub fn to_filename(&self) -> String {
+        format!(
+            "{:04x}_{:02x}_{:02x}.{:x}",
+            self.segment, self.bus, self.device, self.function
+        )
     }
 }
 

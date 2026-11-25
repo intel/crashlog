@@ -193,6 +193,36 @@ impl PmtSysFs {
         endpoints
     }
 
+    /// Returns the PCI BDF of the device that owns the named PMT endpoint
+    ///
+    /// `/sys/class/intel_pmt/<name>` is a symlink into the device tree, and the BDF is the
+    /// nearest PCI device above the endpoint:
+    /// `/sys/devices/.../0000:03:00.0/intel_vsec.crashlog.0/intel_pmt/<name>`
+    pub fn get_bdf_from_named_endpoint(&self, name: &str) -> Option<PciBdf> {
+        let path = self.class_path().join(name);
+
+        let real = std::fs::canonicalize(&path)
+            .inspect_err(|err| log::debug!("Cannot resolve {}: {err}", path.display()))
+            .ok()?;
+        let root = std::fs::canonicalize(&self.root)
+            .inspect_err(|err| log::debug!("Cannot resolve {}: {err}", self.root.display()))
+            .ok()?;
+
+        if !real.starts_with(&root) {
+            log::debug!("{} resolves outside of {}", path.display(), root.display());
+            return None;
+        }
+
+        real.ancestors()
+            .take_while(|p| *p != root)
+            .filter_map(|p| p.file_name()?.to_str()?.parse::<PciBdf>().ok())
+            .next()
+            .or_else(|| {
+                log::warn!("No PCI BDF found in {}", real.display());
+                None
+            })
+    }
+
     pub fn get_endpoints(&self, id: &PmtDeviceId) -> Vec<PmtSysFsEndpoint> {
         match id {
             PmtDeviceId::Name(name) => {
@@ -615,5 +645,56 @@ mod tests {
 
         let guids = sysfs.guids(&devices[0]);
         assert!(guids.contains(&PmtGuid::new(0x00d6d3e2)));
+    }
+
+    #[test]
+    fn bdf_named_symlink() {
+        let root = tempfile::tempdir().unwrap();
+        let sysfs = PmtSysFs::new(root.path());
+
+        let mut dev_path = root.path().to_owned();
+        dev_path.push("sys");
+        dev_path.push("devices");
+        dev_path.push("pci0000:00");
+        dev_path.push("0000:00:01.0");
+        dev_path.push("0000:03:00.0");
+        dev_path.push("intel_vsec.crashlog.0");
+        dev_path.push("intel_pmt");
+        dev_path.push("crashlog0");
+        std::fs::create_dir_all(&dev_path).unwrap();
+
+        let mut class_path = root.path().to_owned();
+        class_path.push("sys");
+        class_path.push("class");
+        class_path.push("intel_pmt");
+        std::fs::create_dir_all(&class_path).unwrap();
+
+        class_path.push("crashlog0");
+        std::os::unix::fs::symlink(&dev_path, &class_path).unwrap();
+
+        // Nearest BDF wins: the card, not the bridge above it
+        assert_eq!(
+            sysfs.get_bdf_from_named_endpoint("crashlog0"),
+            Some(PciBdf::new(0, 3, 0, 0))
+        );
+    }
+
+    #[test]
+    fn bdf_named_no_bdf() {
+        let root = tempfile::tempdir().unwrap();
+        let sysfs = PmtSysFs::new(root.path());
+
+        let mut dev_path = root.path().to_owned();
+        dev_path.push("sys");
+        dev_path.push("class");
+        dev_path.push("intel_pmt");
+        dev_path.push("crashlog0");
+        std::fs::create_dir_all(&dev_path).unwrap();
+
+        // Plain directory: no symlink into the device tree
+        assert_eq!(sysfs.get_bdf_from_named_endpoint("crashlog0"), None);
+
+        // Missing endpoint
+        assert_eq!(sysfs.get_bdf_from_named_endpoint("crashlog7"), None);
     }
 }
