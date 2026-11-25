@@ -36,7 +36,8 @@ use crate::error::Error;
 use acpi::Acpi;
 #[cfg(not(feature = "std"))]
 use alloc::{
-    collections::BTreeSet, fmt, str::FromStr, string::String, string::ToString, vec, vec::Vec,
+    collections::BTreeSet, fmt, format, str::FromStr, string::String, string::ToString, vec,
+    vec::Vec,
 };
 use event_log::EventLog;
 use pmt::{Pmt, PmtDeviceId};
@@ -317,12 +318,38 @@ impl CrashLogSource {
             _ => None,
         }
     }
+
+    /// Returns a name that can be used for files holding Crash Logs extracted from this source
+    ///
+    /// For a named PMT endpoint, the PCI BDF is looked up in sysfs and appended when found
+    /// (`pmt_crashlog0_0000_03_00.0`).
+    pub fn filename(&self) -> String {
+        match self {
+            Self::Acpi | Self::EventLog => self.to_string(),
+            Self::PmtDevice(dev) => format!("pmt_{}", Pmt::default().filename(dev)),
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::pmt::PciBdf;
     use super::*;
+
+    #[test]
+    fn filename() {
+        let bdf = PciBdf::new(0, 3, 0, 0);
+        let named = PmtDeviceId::Name("crashlog0".to_string());
+        let by_bdf = PmtDeviceId::Bdf(PciBdf::new(0, 0, 0x0a, 0));
+
+        assert_eq!(named.filename(Some(&bdf)), "crashlog0_0000_03_00.0");
+        assert_eq!(named.filename(None), "crashlog0");
+        assert_eq!(by_bdf.filename(None), "0000_00_0a.0");
+        assert_eq!(by_bdf.filename(Some(&bdf)), "0000_00_0a.0");
+
+        assert_eq!(CrashLogSource::Acpi.filename(), "acpi");
+        assert_eq!(CrashLogSource::EventLog.filename(), "evt");
+    }
 
     #[test]
     fn parse() {

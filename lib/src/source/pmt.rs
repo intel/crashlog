@@ -183,9 +183,38 @@ impl Pmt {
     pub fn guids(&self, _dev: &PmtDeviceId) -> Option<BTreeSet<PmtGuid>> {
         None
     }
+
+    fn bdf(&self, dev: &PmtDeviceId) -> Option<PciBdf> {
+        match dev {
+            PmtDeviceId::Bdf(bdf) => Some(bdf.clone()),
+            #[cfg(target_os = "linux")]
+            PmtDeviceId::Name(name) => self.sysfs.get_bdf_from_named_endpoint(name),
+            #[cfg(not(target_os = "linux"))]
+            PmtDeviceId::Name(_) => None,
+        }
+    }
+
+    /// Returns a name identifying the PMT source
+    ///
+    /// For a named PMT endpoint, the PCI BDF is looked up in sysfs and appended when it can be
+    /// resolved.
+    pub fn filename(&self, dev: &PmtDeviceId) -> String {
+        dev.filename(self.bdf(dev).as_ref())
+    }
 }
 
 impl PmtDeviceId {
+    /// Returns a name identifying this source
+    ///
+    /// `bdf` is the PCI BDF of a `Name` source, ignored for `Bdf` sources. No I/O is done here.
+    pub(super) fn filename(&self, bdf: Option<&PciBdf>) -> String {
+        match (self, bdf) {
+            (Self::Bdf(bdf), _) => bdf.to_filename(),
+            (Self::Name(name), Some(bdf)) => format!("{name}_{}", bdf.to_filename()),
+            (Self::Name(name), None) => name.clone(),
+        }
+    }
+
     /// Returns if the source is already an alias of another source in the system
     pub(super) fn is_alias(&self) -> bool {
         matches!(self, PmtDeviceId::Bdf(..))
